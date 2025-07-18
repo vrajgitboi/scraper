@@ -1,0 +1,89 @@
+name: Zillow Property Scraper
+
+on:
+  schedule:
+    # Run every day at 3:00 AM UTC (11:00 PM EST previous day)
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Manual trigger
+    inputs:
+      max_properties:
+        description: 'Maximum properties to scrape'
+        required: false
+        default: '50'
+        type: string
+      search_location:
+        description: 'Location to search (e.g., Boston-MA, Cambridge-MA, or just ma for all Massachusetts)'
+        required: false
+        default: 'ma'
+        type: string
+
+jobs:
+  scrape-zillow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 600  # 5 hour timeout for long runs
+    permissions:
+      contents: write
+      actions: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install Chrome and dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable xvfb
+        
+    - name: Install Python dependencies
+      run: |
+        pip install --upgrade pip
+        pip install selenium webdriver-manager undetected-chromedriver pandas python-dotenv
+        
+    - name: Create output directory
+      run: mkdir -p zillow_data
+        
+    - name: Run Zillow scraper
+      run: |
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        python zillow_scraper.py
+      env:
+        MAX_PROPERTIES: ${{ github.event.inputs.max_properties || '50' }}
+        SEARCH_LOCATION: ${{ github.event.inputs.search_location || 'ma' }}
+        HEADLESS: 'true'
+    
+    - name: Upload scraped data as artifact
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: zillow-data-${{ github.run_id }}
+        path: |
+          *.json
+          *.csv
+        retention-days: 30
+    
+    - name: Commit and push results (optional)
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Move files to data directory
+        mkdir -p zillow_data
+        mv *.json zillow_data/ 2>/dev/null || true
+        mv *.csv zillow_data/ 2>/dev/null || true
+        
+        # Only commit if there are changes
+        git add zillow_data/
+        if ! git diff --staged --quiet; then
+          git commit -m "Daily Zillow scraping results - $(date)"
+          git push
+        else
+          echo "No new data to commit"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
