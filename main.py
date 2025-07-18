@@ -18,8 +18,6 @@ class MultiPropertyZillowScraper:
         self.all_properties_data = []
         self.last_scraped_url = None  # Track last scraped URL to avoid duplicates
         self.setup_driver(headless)
-        
-    # Add this method to your MultiPropertyZillowScraper class to replace setup_driver
 
     def setup_driver(self, headless):
         try:
@@ -62,7 +60,7 @@ class MultiPropertyZillowScraper:
             # Additional stealth options
             options.add_experimental_option("excludeSwitches", ["enable-automation"])
             options.add_experimental_option('useAutomationExtension', False)
-            options.add_experimental_option("detach", True)
+            # Removed the problematic "detach" option for GitHub Actions
             
             print("Setting up undetected Chrome driver...")
             self.driver = uc.Chrome(options=options, version_main=None)
@@ -103,7 +101,7 @@ class MultiPropertyZillowScraper:
     
     # Also add this improved method to handle Zillow's page loading
     
-    def navigate_to_search_page(self, search_url):
+    def navigate_to_search_page_improved(self, search_url):
         """Enhanced navigation with better error handling"""
         max_attempts = 3
         for attempt in range(max_attempts):
@@ -1306,8 +1304,6 @@ class MultiPropertyZillowScraper:
         
         return flattened
 
-# Add this to the end of your zillow_scraper.py file, replacing the existing if __name__ == "__main__": section
-
 if __name__ == "__main__":
     import os
     
@@ -1316,8 +1312,8 @@ if __name__ == "__main__":
     print("="*80)
     
     # Get configuration from environment variables (for GitHub Actions) or use defaults
-    max_properties = int(os.getenv('MAX_PROPERTIES', '50'))
-    search_location = os.getenv('SEARCH_LOCATION', 'ma')
+    max_properties = int(os.getenv('MAX_PROPERTIES', '10'))
+    search_location = os.getenv('SEARCH_LOCATION', 'Boston-MA')
     headless = os.getenv('HEADLESS', 'false').lower() == 'true'
     
     print(f"Configuration:")
@@ -1326,11 +1322,17 @@ if __name__ == "__main__":
     print(f"  • Headless mode: {headless}")
     print("="*80)
     
-    # Build search URL based on location
-    if search_location == 'ma':
-        search_url = "https://www.zillow.com/ma/"
+    # Build search URL with better logic
+    if search_location.lower() in ['ma', 'massachusetts']:
+        search_url = "https://www.zillow.com/homes/for_sale/Massachusetts_rb/"
+    elif search_location.lower() in ['boston-ma', 'boston']:
+        search_url = "https://www.zillow.com/boston-ma/"
+    elif search_location.lower() in ['cambridge-ma', 'cambridge']:
+        search_url = "https://www.zillow.com/cambridge-ma/"
     else:
-        search_url = f"https://www.zillow.com/homes/for_sale/{search_location}/"
+        # For other locations, try the general format
+        clean_location = search_location.replace('-', '-').lower()
+        search_url = f"https://www.zillow.com/{clean_location}/"
     
     print(f"Search URL: {search_url}")
     
@@ -1338,49 +1340,77 @@ if __name__ == "__main__":
     scraper = MultiPropertyZillowScraper(headless=headless)
     
     try:
-        # Scrape properties
-        print(f"\nStarting to scrape {max_properties} properties...")
-        all_properties = scraper.scrape_multiple_properties(search_url, max_properties=max_properties)
+        print(f"\nTesting navigation to search page...")
         
-        # Save all data
-        if all_properties:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            json_file, csv_file = scraper.save_all_properties(
-                filename_prefix=f"zillow_{search_location}_{timestamp}"
-            )
+        # Navigate to search page first and debug
+        scraper.driver.get(search_url)
+        time.sleep(10)  # Wait longer for page load
+        
+        print(f"Current URL after navigation: {scraper.driver.current_url}")
+        print(f"Page title: {scraper.driver.title}")
+        
+        # Try to find search results with multiple selectors
+        search_selectors = [
+            '//*[@id="grid-search-results"]/ul',
+            '//*[@id="grid-search-results"]',
+            '//ul[contains(@class, "photo-cards")]',
+            '//div[contains(@class, "search-page-react-content")]',
+            '//article[contains(@class, "property-card")]',
+            '//div[contains(@class, "PropertyCardWrapper")]',
+            '//a[contains(@href, "/homedetails/")]'
+        ]
+        
+        results_found = False
+        for i, selector in enumerate(search_selectors):
+            try:
+                elements = scraper.driver.find_elements(By.XPATH, selector)
+                if elements:
+                    print(f"✓ Found {len(elements)} elements with selector {i+1}: {selector}")
+                    results_found = True
+                    break
+                else:
+                    print(f"✗ No elements found with selector {i+1}: {selector}")
+            except Exception as e:
+                print(f"✗ Error with selector {i+1}: {e}")
+        
+        if not results_found:
+            print("\n❌ No search results found with any selector")
+            print("Saving page source for debugging...")
             
-            # Print summary
-            print(f"\n🎯 SCRAPING COMPLETE!")
-            print(f"   ✓ Successfully scraped: {len(all_properties)} properties")
-            print(f"   ✓ Data saved to: {json_file}")
-            print(f"   ✓ CSV saved to: {csv_file}")
+            # Save page source for debugging
+            with open("debug_page.html", "w", encoding="utf-8") as f:
+                f.write(scraper.driver.page_source)
+            print("✓ Page source saved to debug_page.html")
             
-            # Create a summary file for GitHub Actions
-            summary = {
-                "timestamp": timestamp,
-                "search_location": search_location,
-                "properties_scraped": len(all_properties),
-                "json_file": json_file,
-                "csv_file": csv_file
-            }
-            
-            with open(f"scraping_summary_{timestamp}.json", 'w') as f:
-                json.dump(summary, f, indent=2)
-                
+            # Also save a screenshot if possible
+            try:
+                scraper.driver.save_screenshot("debug_screenshot.png")
+                print("✓ Screenshot saved to debug_screenshot.png")
+            except:
+                print("✗ Could not save screenshot")
         else:
-            print("\n❌ No properties were scraped successfully")
-    
-    except KeyboardInterrupt:
-        print("\n⏹️ Scraping interrupted by user")
-        if scraper.all_properties_data:
-            print("Saving partial data...")
-            scraper.save_all_properties(filename_prefix=f"zillow_{search_location}_partial")
+            print("✓ Search results found! Starting scraping...")
+            # Scrape properties
+            all_properties = scraper.scrape_multiple_properties(search_url, max_properties=max_properties)
+            
+            # Save all data
+            if all_properties:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                json_file, csv_file = scraper.save_all_properties(
+                    filename_prefix=f"zillow_{search_location}_{timestamp}"
+                )
+                
+                print(f"\n🎯 SCRAPING COMPLETE!")
+                print(f"   ✓ Successfully scraped: {len(all_properties)} properties")
+                print(f"   ✓ Data saved to: {json_file}")
+                print(f"   ✓ CSV saved to: {csv_file}")
+            else:
+                print("\n❌ No properties were scraped successfully")
     
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
-        if scraper.all_properties_data:
-            print("Saving partial data...")
-            scraper.save_all_properties(filename_prefix=f"zillow_{search_location}_error")
+        import traceback
+        traceback.print_exc()
     
     finally:
         # Clean up
