@@ -51,7 +51,7 @@ jobs:
       run: |
         export DISPLAY=:99
         Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
-        python zillow_scraper.py
+        python main.py
       env:
         MAX_PROPERTIES: ${{ github.event.inputs.max_properties || '50' }}
         SEARCH_LOCATION: ${{ github.event.inputs.search_location || 'ma' }}
