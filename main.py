@@ -16,7 +16,7 @@ import re
 class MultiPropertyZillowScraper:
     def __init__(self, headless=False):
         self.all_properties_data = []
-        self.last_scraped_url = None  # Track last scraped URL to avoid duplicates
+        self.last_scraped_url = None
         self.setup_driver(headless)
         
     def setup_driver(self, headless):
@@ -27,13 +27,24 @@ class MultiPropertyZillowScraper:
             if headless:
                 options.add_argument("--headless=new")
             
+            # Enhanced anti-detection options
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_experimental_option('useAutomationExtension', False)
+            options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             options.add_argument("--window-size=1920,1080")
+            options.add_argument("--disable-web-security")
+            options.add_argument("--allow-running-insecure-content")
             
             self.driver = uc.Chrome(options=options, version_main=None)
             
+            # Remove automation indicators
+            self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            
         except Exception as e:
+            print(f"Failed to initialize undetected chrome: {e}")
             from webdriver_manager.chrome import ChromeDriverManager
             
             options = Options()
@@ -42,6 +53,10 @@ class MultiPropertyZillowScraper:
             
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_experimental_option('useAutomationExtension', False)
+            options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             
             service = Service(ChromeDriverManager().install())
             self.driver = webdriver.Chrome(service=service, options=options)
@@ -49,7 +64,6 @@ class MultiPropertyZillowScraper:
     def check_and_recover_driver(self):
         """Check if driver is still active and recover if needed"""
         try:
-            # Simple check to see if driver is responsive
             self.driver.current_url
             return True
         except Exception as e:
@@ -57,17 +71,15 @@ class MultiPropertyZillowScraper:
             print("🔄 Attempting to recover browser session...")
             
             try:
-                # Try to quit the existing driver
                 self.driver.quit()
             except:
                 pass
             
-            # Reinitialize the driver
             self.setup_driver(headless=False)
             return True
         
     def navigate_to_search_page(self, search_url):
-        """Navigate to search page with recovery"""
+        """Navigate to search page with enhanced detection"""
         max_attempts = 3
         for attempt in range(max_attempts):
             try:
@@ -76,422 +88,276 @@ class MultiPropertyZillowScraper:
                     
                 print(f"🔄 Navigating to search page (attempt {attempt + 1})...")
                 self.driver.get(search_url)
-                time.sleep(3)
                 
-                # Verify we're on the search page
-                WebDriverWait(self.driver, 15).until(
-                    EC.presence_of_element_located((By.XPATH, '//*[@id="grid-search-results"]/ul'))
-                )
-                print("✅ Successfully loaded search page")
-                return True
+                # Add random delay to mimic human behavior
+                time.sleep(random.uniform(3, 6))
+                
+                # Wait for page to load and check for different possible containers
+                page_loaded = False
+                selectors_to_try = [
+                    '[data-testid="search-page-list-container"]',
+                    '#grid-search-results ul',
+                    '[data-testid="property-card"]',
+                    '.List-c11n-8-84-3__sc-1smrmqp-0',
+                    '.search-page-list-container',
+                    '.property-card-data'
+                ]
+                
+                for selector in selectors_to_try:
+                    try:
+                        WebDriverWait(self.driver, 10).until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+                        )
+                        print(f"✅ Successfully loaded search page with selector: {selector}")
+                        page_loaded = True
+                        break
+                    except TimeoutException:
+                        continue
+                
+                if page_loaded:
+                    return True
+                else:
+                    print(f"❌ Failed to find search results on attempt {attempt + 1}")
+                    # Take a screenshot for debugging
+                    try:
+                        self.driver.save_screenshot(f"debug_page_{attempt}.png")
+                        print(f"📸 Screenshot saved: debug_page_{attempt}.png")
+                    except:
+                        pass
+                    
+                    if attempt < max_attempts - 1:
+                        time.sleep(5)
+                        continue
                 
             except Exception as e:
                 print(f"❌ Failed to load search page (attempt {attempt + 1}): {e}")
                 if attempt < max_attempts - 1:
                     time.sleep(2)
                     continue
-                else:
-                    return False
         
         return False
 
     def scrape_multiple_properties(self, search_url, max_properties=50):
-        """Scrape multiple properties from search results"""
+        """Scrape multiple properties from search results with improved detection"""
         print(f"Starting to scrape {max_properties} properties from search results...")
         
-        self.driver.get(search_url)
-        time.sleep(5)
+        # Navigate to search page first
+        if not self.navigate_to_search_page(search_url):
+            print("❌ Failed to load search page, cannot proceed")
+            return []
         
         properties_scraped = 0
         current_page = 1
-        search_base_url = search_url  # Store original search URL
         
         while properties_scraped < max_properties:
             print(f"\n=== PAGE {current_page} ===")
-            
-            # Wait for search results to load
-            try:
-                WebDriverWait(self.driver, 15).until(
-                    EC.presence_of_element_located((By.XPATH, '//*[@id="grid-search-results"]/ul'))
-                )
-                print("Search results container found")
-            except TimeoutException:
-                print("Search results not found. Stopping.")
-                break
             
             # Get all property links on current page
             property_links = self.get_property_links()
             
             if not property_links:
                 print("No property links found on this page.")
+                # Try to take a screenshot for debugging
+                try:
+                    self.driver.save_screenshot(f"no_properties_page_{current_page}.png")
+                    print(f"📸 Debug screenshot saved: no_properties_page_{current_page}.png")
+                except:
+                    pass
                 break
             
             print(f"Found {len(property_links)} properties on page {current_page}")
             
-            # Track processed properties on this page by their href
+            # Process each property on current page
             processed_urls = set()
             property_index = 0
-            max_attempts_per_property = 3  # Maximum attempts to find a new property
             
-            # Process each property on current page
             while property_index < len(property_links) and properties_scraped < max_properties:
-                attempts = 0
-                found_new_property = False
-                
-                while attempts < max_attempts_per_property and not found_new_property:
+                try:
+                    print(f"\nProcessing property {properties_scraped + 1}/{max_properties} (Page {current_page}, Property {property_index + 1})")
+                    
+                    # Re-get property links to avoid stale element references
+                    current_property_links = self.get_property_links()
+                    if property_index >= len(current_property_links):
+                        print(f"Property index {property_index} not available, moving to next page")
+                        break
+                    
+                    link_element = current_property_links[property_index]
+                    
+                    # Get the href to check if we've already processed this property
                     try:
-                        print(f"\nProcessing property {properties_scraped + 1}/{max_properties} (Page {current_page}, Property {property_index + 1}, Attempt {attempts + 1})")
-                        
-                        # Re-get property links to avoid stale element references
-                        current_property_links = self.get_property_links()
-                        if property_index >= len(current_property_links):
-                            print(f"Property index {property_index} not available, moving to next page")
-                            property_index = len(property_links)  # Force exit from while loop
-                            break
-                        
-                        link_element = current_property_links[property_index]
-                        
-                        # Get the href to check if we've already processed this property
-                        try:
-                            property_url = link_element.get_attribute('href')
-                            if property_url in processed_urls:
-                                print(f"Already processed this property, moving to next: {property_url}")
-                                property_index += 1
-                                attempts = 0  # Reset attempts for next property
-                                break
-                            
-                            print(f"Clicking on property {property_index + 1}: {property_url}")
-                            processed_urls.add(property_url)
-                            found_new_property = True
-                        except Exception as e:
-                            print(f"Could not get property URL: {e}")
+                        property_url = link_element.get_attribute('href')
+                        if not property_url or property_url in processed_urls:
+                            print(f"Already processed or invalid URL, moving to next")
                             property_index += 1
-                            attempts = 0
-                            break
-                        
-                        # Store current URL before navigation
-                        current_url_before = self.driver.current_url
-                        
-                        # Try multiple navigation methods
-                        navigation_success = False
-                        
-                        # Method 1: Direct URL navigation (most reliable)
-                        try:
-                            print(f"  Method 1: Direct navigation to {property_url}")
-                            self.driver.get(property_url)
-                            time.sleep(random.uniform(2, 4))
-                            
-                            # Verify we navigated to the correct property
-                            if property_url in self.driver.current_url or "/homedetails/" in self.driver.current_url:
-                                if self.driver.current_url != current_url_before:
-                                    navigation_success = True
-                                    print(f"  ✓ Successfully navigated via direct URL")
-                                else:
-                                    print(f"  ✗ URL didn't change from previous page")
-                            else:
-                                print(f"  ✗ Direct navigation failed")
-                        except Exception as e:
-                            print(f"  ✗ Direct navigation error: {e}")
-                        
-                        # Method 2: JavaScript click with better verification
-                        if not navigation_success:
-                            try:
-                                print(f"  Method 2: JavaScript click")
-                                # Scroll to element first
-                                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link_element)
-                                time.sleep(1)
-                                
-                                # Click using JavaScript
-                                self.driver.execute_script("arguments[0].click();", link_element)
-                                time.sleep(random.uniform(1, 3))
-                                
-                                # Verify navigation
-                                if "/homedetails/" in self.driver.current_url and self.driver.current_url != current_url_before:
-                                    navigation_success = True
-                                    print(f"  ✓ Successfully navigated via JavaScript click")
-                                else:
-                                    print(f"  ✗ JavaScript click didn't navigate properly")
-                            except Exception as e:
-                                print(f"  ✗ JavaScript click error: {e}")
-                        
-                        # Method 3: ActionChains click
-                        if not navigation_success:
-                            try:
-                                print(f"  Method 3: ActionChains click")
-                                # Re-find the element to avoid stale reference
-                                current_property_links = self.get_property_links()
-                                if property_index < len(current_property_links):
-                                    fresh_link = current_property_links[property_index]
-                                    
-                                    actions = ActionChains(self.driver)
-                                    actions.move_to_element(fresh_link).click().perform()
-                                    time.sleep(random.uniform(1, 3))
-                                    
-                                    # Verify navigation
-                                    if "/homedetails/" in self.driver.current_url and self.driver.current_url != current_url_before:
-                                        navigation_success = True
-                                        print(f"  ✓ Successfully navigated via ActionChains")
-                                    else:
-                                        print(f"  ✗ ActionChains click didn't navigate properly")
-                            except Exception as e:
-                                print(f"  ✗ ActionChains click error: {e}")
-                        
-                        # Final verification
-                        if not navigation_success:
-                            print(f"  ❌ All navigation methods failed for property {property_index + 1}")
-                            property_index += 1
-                            attempts = 0
                             continue
                         
-                        # Double-check we're on the right property page
-                        final_url = self.driver.current_url
-                        if "/homedetails/" not in final_url:
-                            print(f"  ❌ Not on a property details page: {final_url}")
-                            self.go_back_to_search()
-                            property_index += 1
-                            attempts = 0
-                            continue
-                        
-                        # Verify we're not on the same property as before
-                        if hasattr(self, 'last_scraped_url') and self.last_scraped_url == final_url:
-                            print(f"  ⚠️  Same property as last time, skipping: {final_url}")
-                            self.go_back_to_search()
-                            property_index += 1
-                            attempts = 0
-                            continue
-                        
-                        # Store this URL for next comparison
-                        self.last_scraped_url = final_url
-                        
-                        # Extract property data with timeout (Windows-compatible)
-                        print(f"Successfully navigated to property page: {self.driver.current_url}")
-                        
-                        # Add URL validation before extraction
-                        current_property_url = self.driver.current_url
-                        if not current_property_url or "/homedetails/" not in current_property_url:
-                            print(f"❌ Invalid property URL: {current_property_url}")
-                            self.go_back_to_search()
-                            property_index += 1
-                            attempts = 0
-                            continue
-                        
-                        try:
-                            # Simple timeout without signal (Windows compatible)
-                            import threading
-                            import time as time_module
-                            
-                            def extract_with_timeout():
-                                return self.extract_complete_property_data()
-                            
-                            # Create a thread for extraction
-                            result = [None]
-                            exception = [None]
-                            
-                            def run_extraction():
-                                try:
-                                    result[0] = extract_with_timeout()
-                                except Exception as e:
-                                    exception[0] = e
-                            
-                            thread = threading.Thread(target=run_extraction)
-                            thread.daemon = True
-                            thread.start()
-                            thread.join(timeout=45)  # 45 second timeout
-                            
-                            if thread.is_alive():
-                                print("⚠️ Property extraction timed out after 45 seconds, skipping...")
-                                property_data = None
-                            elif exception[0]:
-                                print(f"⚠️ Error during property extraction: {exception[0]}")
-                                property_data = None
-                            else:
-                                property_data = result[0]
-                            
-                        except Exception as e:
-                            print(f"⚠️ Error during property extraction: {e}")
-                            property_data = None
-                        
-                        if property_data:
-                            self.all_properties_data.append(property_data)
-                            properties_scraped += 1
-                            print(f"✓ Successfully scraped property {properties_scraped}")
-                        else:
-                            print("✗ Failed to extract property data")
-                        
-                        # Navigate back to search results
-                        print("Going back to search results...")
-                        self.go_back_to_search()
-                        
-                        # Wait for search results to reload
-                        time.sleep(1.5)
-                        
-                        # Verify we're back on search results
-                        try:
-                            WebDriverWait(self.driver, 8).until(
-                                EC.presence_of_element_located((By.XPATH, '//*[@id="grid-search-results"]/ul'))
-                            )
-                            print("✓ Back on search results page")
-                        except TimeoutException:
-                            print("✗ Failed to return to search results")
-                            break
-                        
-                        # Move to next property
-                        property_index += 1
-                        attempts = 0  # Reset attempts for next property
-                        
+                        print(f"Processing property: {property_url}")
+                        processed_urls.add(property_url)
                     except Exception as e:
-                        print(f"✗ Error processing property {property_index + 1}: {e}")
-                        attempts += 1
-                        if attempts >= max_attempts_per_property:
-                            print(f"Max attempts reached for property {property_index + 1}, moving to next")
-                            property_index += 1
-                            attempts = 0
-                        
-                        # Try to go back to search results anyway
-                        try:
-                            back_success = self.go_back_to_search()
-                            if not back_success:
-                                print("❌ Failed to return to search results after error, stopping")
-                                return self.all_properties_data
-                            time.sleep(2)
-                        except:
-                            print("❌ Critical navigation error, stopping scraper")
-                            return self.all_properties_data
+                        print(f"Could not get property URL: {e}")
+                        property_index += 1
+                        continue
+                    
+                    # Navigate to property page
+                    navigation_success = self.navigate_to_property(property_url)
+                    
+                    if not navigation_success:
+                        print(f"❌ Failed to navigate to property")
+                        property_index += 1
+                        continue
+                    
+                    # Extract property data
+                    property_data = self.extract_complete_property_data()
+                    
+                    if property_data:
+                        self.all_properties_data.append(property_data)
+                        properties_scraped += 1
+                        print(f"✓ Successfully scraped property {properties_scraped}")
+                    else:
+                        print("✗ Failed to extract property data")
+                    
+                    # Navigate back to search results
+                    if not self.go_back_to_search():
+                        print("❌ Failed to return to search results, stopping")
+                        break
+                    
+                    property_index += 1
+                    time.sleep(random.uniform(1, 3))  # Random delay between properties
+                    
+                except Exception as e:
+                    print(f"✗ Error processing property {property_index + 1}: {e}")
+                    property_index += 1
+                    
+                    try:
+                        self.go_back_to_search()
+                    except:
+                        print("❌ Critical navigation error, stopping scraper")
+                        return self.all_properties_data
             
             # Check if we need to go to next page
             if properties_scraped < max_properties:
-                print(f"\nFinished page {current_page} (processed {len(processed_urls)} properties). Going to next page...")
+                print(f"\nFinished page {current_page}. Going to next page...")
                 if not self.go_to_next_page():
                     print("No more pages available or failed to navigate. Stopping.")
                     break
                 current_page += 1
-                time.sleep(1)
+                time.sleep(random.uniform(2, 4))
             
         print(f"\n🎉 Completed! Scraped {len(self.all_properties_data)} properties total.")
         return self.all_properties_data
     
     def get_property_links(self):
-        """Get all clickable property links on current page"""
+        """Get all clickable property links on current page with multiple strategies"""
         try:
-            # Wait for the results container with longer timeout
-            WebDriverWait(self.driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, '//*[@id="grid-search-results"]/ul'))
-            )
+            # Wait a bit for dynamic content to load
+            time.sleep(2)
             
-            # Find property links specifically in the grid results
-            property_links = self.driver.find_elements(By.XPATH, '//*[@id="grid-search-results"]/ul//a[contains(@href, "/homedetails/")]')
-            
-            print(f"Found {len(property_links)} property links using primary selector")
-            
-            # If no links found, try alternative selectors
-            if not property_links:
-                alternative_selectors = [
-                    '//*[@id="grid-search-results"]/ul//article//a',
-                    '//*[@id="grid-search-results"]//a[contains(@href, "zpid")]',
-                    '//*[@id="grid-search-results"]/ul//a'
-                ]
+            # Try multiple selectors for property links
+            selectors_to_try = [
+                # New Zillow structure
+                '[data-testid="property-card"] a',
+                '.property-card-data a',
+                '[data-testid="property-card-link"]',
                 
-                for selector in alternative_selectors:
-                    property_links = self.driver.find_elements(By.XPATH, selector)
-                    if property_links:
-                        print(f"Found {len(property_links)} property links using alternative selector: {selector}")
-                        break
+                # Legacy selectors
+                '#grid-search-results ul a[href*="/homedetails/"]',
+                '.List-c11n-8-84-3__sc-1smrmqp-0 a',
+                '.search-page-list-container a[href*="/homedetails/"]',
+                
+                # Generic fallbacks
+                'a[href*="/homedetails/"]',
+                'a[href*="zpid"]'
+            ]
             
-            # Filter out any non-property links and get unique URLs
-            unique_links = {}  # Use dict to maintain order and ensure uniqueness
+            property_links = []
+            
+            for selector in selectors_to_try:
+                try:
+                    elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                    if elements:
+                        print(f"Found {len(elements)} links with selector: {selector}")
+                        
+                        # Filter for valid property links
+                        valid_links = []
+                        for element in elements:
+                            try:
+                                href = element.get_attribute('href')
+                                if href and ('/homedetails/' in href or 'zpid' in href):
+                                    valid_links.append(element)
+                            except:
+                                continue
+                        
+                        if valid_links:
+                            property_links = valid_links
+                            break
+                except Exception as e:
+                    continue
+            
+            # Remove duplicates based on href
+            unique_links = {}
             for link in property_links:
                 try:
                     href = link.get_attribute('href')
-                    if href and ('/homedetails/' in href or 'zpid' in href):
-                        # Use href as key to avoid duplicates
+                    if href:
                         unique_links[href] = link
                 except:
                     continue
             
             filtered_links = list(unique_links.values())
             print(f"Filtered to {len(filtered_links)} unique property links")
+            
             return filtered_links
             
         except Exception as e:
             print(f"Error getting property links: {e}")
             return []
     
-    def go_back_to_search(self):
-        """Navigate back to search results using multiple strategies"""
+    def navigate_to_property(self, property_url):
+        """Navigate to a specific property URL"""
         try:
-            print("Attempting to return to search results...")
+            print(f"  Navigating to: {property_url}")
+            self.driver.get(property_url)
+            time.sleep(random.uniform(2, 4))
             
-            # Store current URL for verification
+            # Verify we're on a property details page
             current_url = self.driver.current_url
-            
-            # Strategy 1: Browser back (most reliable for this case)
-            try:
-                print("  Strategy 1: Using browser back")
-                self.driver.back()
-                time.sleep(3)
+            if "/homedetails/" in current_url or "zpid" in current_url:
+                print(f"  ✓ Successfully navigated to property page")
+                return True
+            else:
+                print(f"  ✗ Navigation failed - not on property page: {current_url}")
+                return False
                 
-                # Wait for search results to appear
-                try:
-                    WebDriverWait(self.driver, 8).until(
-                        EC.presence_of_element_located((By.XPATH, '//*[@id="grid-search-results"]/ul'))
-                    )
-                    print("  ✓ Successfully returned to search results via browser back")
-                    return True
-                except TimeoutException:
-                    print("  ✗ Browser back didn't return to search results")
-            except Exception as e:
-                print(f"  ✗ Browser back failed: {e}")
+        except Exception as e:
+            print(f"  ✗ Navigation error: {e}")
+            return False
+    
+    def go_back_to_search(self):
+        """Navigate back to search results"""
+        try:
+            print("Returning to search results...")
+            self.driver.back()
+            time.sleep(random.uniform(2, 4))
             
-            # Strategy 2: Try specific back button selectors
-            back_button_selectors = [
-                '//*[@id="wrapper"]/div[2]/div[1]/section/div/div[1]/div/nav/div/span/button',
-                '//button[contains(@aria-label, "Back to search")]',
-                '//button[contains(@aria-label, "Back")]',
-                '//button[contains(text(), "Back")]',
-                '//nav//button[contains(@class, "back")]'
+            # Verify we're back on search results
+            selectors_to_check = [
+                '[data-testid="search-page-list-container"]',
+                '#grid-search-results',
+                '.search-page-list-container',
+                '[data-testid="property-card"]'
             ]
             
-            for selector in back_button_selectors:
+            for selector in selectors_to_check:
                 try:
-                    print(f"  Strategy 2: Trying back button selector: {selector}")
-                    back_button = WebDriverWait(self.driver, 3).until(
-                        EC.element_to_be_clickable((By.XPATH, selector))
+                    WebDriverWait(self.driver, 5).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, selector))
                     )
-                    
-                    self.driver.execute_script("arguments[0].click();", back_button)
-                    time.sleep(3)
-                    
-                    # Verify we're back on search results
-                    try:
-                        WebDriverWait(self.driver, 5).until(
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="grid-search-results"]/ul'))
-                        )
-                        print("  ✓ Successfully returned to search results via back button")
-                        return True
-                    except TimeoutException:
-                        continue
-                        
-                except Exception as e:
+                    print("✓ Back on search results page")
+                    return True
+                except TimeoutException:
                     continue
             
-            # Strategy 3: Navigate to Massachusetts search URL directly
-            print("  Strategy 3: Direct navigation to search page")
-            try:
-                search_url = "https://www.zillow.com/ma/"
-                self.driver.get(search_url)
-                time.sleep(2)
-                
-                # Wait for search results
-                WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, '//*[@id="grid-search-results"]/ul'))
-                )
-                print("  ✓ Successfully returned to search results via direct navigation")
-                return True
-                
-            except Exception as e:
-                print(f"  ✗ Direct navigation failed: {e}")
-            
-            print("  ❌ All navigation strategies failed")
+            print("✗ Failed to return to search results")
             return False
             
         except Exception as e:
@@ -501,60 +367,29 @@ class MultiPropertyZillowScraper:
     def go_to_next_page(self):
         """Navigate to next page of results"""
         try:
-            # Wait for current page to load completely
-            time.sleep(1)
-            
-            # Try your specific next page xpath first
+            # Try multiple selectors for next page button
             next_page_selectors = [
-                '/html/body/div[1]/div/div[2]/div/div/div[1]/div[1]/div[2]/nav/ul/li[10]',
-                '/html/body/div[1]/div/div[2]/div/div/div[1]/div[1]/div[2]/nav/ul/li[10]/a',
-                '//*[@id="grid-search-results"]/div[2]/nav/ul/li[10]/a',
-                '//*[@id="grid-search-results"]/div[2]/nav/ul/li[10]'
+                '[data-testid="pagination-next-page"]',
+                'a[aria-label="Next page"]',
+                'a[rel="next"]',
+                '.PaginationJumpItem-c11n-8-84-3__sc-18hsrnn-0:last-child a',
+                'nav [aria-label="Go to next page"]'
             ]
             
             for selector in next_page_selectors:
                 try:
                     next_button = WebDriverWait(self.driver, 5).until(
-                        EC.element_to_be_clickable((By.XPATH, selector))
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
                     )
                     
                     print(f"Found next page button with selector: {selector}")
                     self.driver.execute_script("arguments[0].scrollIntoView(true);", next_button)
-                    time.sleep(0.5)
+                    time.sleep(1)
                     self.driver.execute_script("arguments[0].click();", next_button)
                     
-                    # Wait for new page to load
-                    time.sleep(2)
+                    time.sleep(random.uniform(3, 5))
                     return True
                     
-                except:
-                    continue
-            
-            # Try alternative next page selectors
-            alternative_selectors = [
-                '//nav//a[contains(@aria-label, "Next page")]',
-                '//nav//a[contains(text(), "Next")]',
-                '//a[@rel="next"]',
-                '//button[contains(@aria-label, "Next page")]',
-                '//*[@id="grid-search-results"]//nav//a[contains(@class, "next")]',
-                '//nav//li[last()]//a',
-                '//nav//li[contains(@class, "next")]//a'
-            ]
-            
-            for selector in alternative_selectors:
-                try:
-                    next_button = WebDriverWait(self.driver, 3).until(
-                        EC.element_to_be_clickable((By.XPATH, selector))
-                    )
-                    
-                    print(f"Found alternative next button: {selector}")
-                    self.driver.execute_script("arguments[0].scrollIntoView(true);", next_button)
-                    time.sleep(0.5)
-                    self.driver.execute_script("arguments[0].click();", next_button)
-                    
-                    # Wait for new page to load
-                    time.sleep(2)
-                    return True
                 except:
                     continue
             
@@ -566,7 +401,7 @@ class MultiPropertyZillowScraper:
             return False
     
     def extract_complete_property_data(self):
-        """Extract all property data from current property page - optimized version"""
+        """Extract all property data from current property page"""
         try:
             print("Starting property data extraction...")
             
@@ -584,7 +419,7 @@ class MultiPropertyZillowScraper:
                 'property_type': 'N/A',
                 'price_per_sqft': 'N/A',
                 'year_built': 'N/A',
-                'region':'N/A',
+                'region': 'N/A',
                 
                 'interior_features': [],
                 'other_rooms': [],
@@ -592,8 +427,8 @@ class MultiPropertyZillowScraper:
                 'utilities': 'N/A',
                 'parking': 'N/A',
                 
-                'walk_score':'N/A',
-                'bike_score':'N/A',
+                'walk_score': 'N/A',
+                'bike_score': 'N/A',
                 
                 'elementary_school': {'name': 'N/A', 'score': 'N/A', 'distance': 'N/A'},
                 'middle_school': {'name': 'N/A', 'score': 'N/A', 'distance': 'N/A'},
@@ -601,33 +436,22 @@ class MultiPropertyZillowScraper:
     
                 'flood_risk': 'N/A',
                 'fire_risk': 'N/A',
-                'wind_risk':'N/A',
-                'air_risk':'N/A',
+                'wind_risk': 'N/A',
+                'air_risk': 'N/A',
                 'heat_risk': 'N/A',
 
                 'nearby_cities': [],
                 'property_history': 'N/A'
             }
             
-            # Only extract essential data quickly
-            print("Extracting basic info...")
-            try:
-                self.extract_price_and_basic_info(property_data)
-            except Exception as e:
-                print(f"  - Error in basic info: {e}")
+            # Extract basic property information
+            self.extract_basic_property_info(property_data)
             
-            print("Extracting property features...")
-            try:
-                self.extract_property_features_detailed(property_data)
-            except Exception as e:
-                print(f"  - Error in features: {e}")
-                
-            self.extract_neighborhood_scores_detailed(property_data)
-            self.extract_schools_detailed(property_data)
-            self.extract_environmental_risks(property_data)
-            self.extract_market_data_detailed(property_data)
-            self.extract_monthly_payment(property_data)
-            self.extract_nearby_cities(property_data)
+            # Extract additional features
+            self.extract_property_features(property_data)
+            
+            # Extract neighborhood and risk data
+            self.extract_neighborhood_data(property_data)
             
             print("Property data extraction completed!")
             return property_data
@@ -636,536 +460,121 @@ class MultiPropertyZillowScraper:
             print(f"Error in extraction: {e}")
             return None
     
-    def extract_price_and_basic_info(self, property_data):
-        self.extract_price_advanced(property_data)
-        self.extract_basic_info_advanced(property_data)
-    
-    def extract_price_advanced(self, property_data):
-        price_strategies = [
-            ('CSS', 'span[data-testid="price"]'),
-            ('CSS', '.notranslate'),
-            ('CSS', 'h3 span'),
-            ('CSS', 'span.Text-c11n-8-100-1__sc-aiai24-0'),
-            ('XPATH', "//span[contains(@class, 'Text') and contains(text(), '$')]"),
-            ('XPATH', "//h3//span[contains(text(), '$')]"),
-        ]
-        
-        for strategy_type, selector in price_strategies:
-            try:
-                if strategy_type == 'CSS':
-                    elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
-                else:
-                    elements = self.driver.find_elements(By.XPATH, selector)
-                
-                for element in elements:
-                    text = element.text.strip()
-                    price_match = re.match(r'^\$[\d,]+(?:\.\d{2})?$', text)
-                    if price_match:
-                        property_data['price'] = text
-                        return
-            except:
-                continue
-    
-    def extract_basic_info_advanced(self, property_data):
-        all_elements = self.driver.find_elements(By.XPATH, "//span | //div")
-        
-        bed_bath_sqft_pattern = re.compile(r'(\d+)\s*(bed|bd|bedroom|br)s?\s*[,•·]?\s*(\d+(?:\.\d+)?)\s*(bath|ba|bathroom)s?\s*[,•·]?\s*([\d,]+)\s*(sqft|sq\.?\s*ft)', re.I)
-        
-        for element in all_elements:
-            text = element.text.strip()
+    def extract_basic_property_info(self, property_data):
+        """Extract basic property information"""
+        try:
+            # Extract price
+            price_selectors = [
+                '[data-testid="price"]',
+                '.notranslate',
+                'span[class*="Text"][class*="notranslate"]'
+            ]
             
-            match = bed_bath_sqft_pattern.search(text)
+            for selector in price_selectors:
+                try:
+                    price_element = self.driver.find_element(By.CSS_SELECTOR, selector)
+                    price_text = price_element.text.strip()
+                    if '$' in price_text and re.match(r'^\$[\d,]+', price_text):
+                        property_data['price'] = price_text
+                        break
+                except:
+                    continue
+            
+            # Extract address
+            address_selectors = [
+                'h1[data-testid="street-address"]',
+                '[data-testid="street-address"]',
+                'h1'
+            ]
+            
+            for selector in address_selectors:
+                try:
+                    address_element = self.driver.find_element(By.CSS_SELECTOR, selector)
+                    address_text = address_element.text.strip()
+                    if any(indicator in address_text.lower() for indicator in ['st', 'ave', 'rd', 'dr', 'ma']):
+                        property_data['address'] = address_text
+                        break
+                except:
+                    continue
+            
+            # Extract beds, baths, sqft from page text
+            page_text = self.driver.page_source
+            
+            # Look for bed/bath/sqft pattern
+            bed_bath_sqft_pattern = re.compile(r'(\d+)\s*(bed|bd|bedroom)s?\s*[,•·]?\s*(\d+(?:\.\d+)?)\s*(bath|ba|bathroom)s?\s*[,•·]?\s*([\d,]+)\s*(sqft|sq\.?\s*ft)', re.I)
+            match = bed_bath_sqft_pattern.search(page_text)
+            
             if match:
                 property_data['beds'] = match.group(1)
                 property_data['baths'] = match.group(3)
                 property_data['sqft'] = match.group(5)
-                break
-            
-            if property_data['beds'] == 'N/A':
-                bed_match = re.search(r'(\d+)\s*(bed|bd|bedroom|br)s?', text, re.I)
-                if bed_match and int(bed_match.group(1)) <= 10:
+            else:
+                # Try individual patterns
+                bed_match = re.search(r'(\d+)\s*(bed|bd|bedroom)s?', page_text, re.I)
+                if bed_match:
                     property_data['beds'] = bed_match.group(1)
-            
-            if property_data['baths'] == 'N/A':
-                bath_match = re.search(r'(\d+(?:\.\d+)?)\s*(bath|ba|bathroom)s?', text, re.I)
-                if bath_match and float(bath_match.group(1)) <= 10:
+                
+                bath_match = re.search(r'(\d+(?:\.\d+)?)\s*(bath|ba|bathroom)s?', page_text, re.I)
+                if bath_match:
                     property_data['baths'] = bath_match.group(1)
-            
-            if property_data['sqft'] == 'N/A':
-                sqft_match = re.search(r'([\d,]+)\s*(sqft|sq\.?\s*ft)', text, re.I)
+                
+                sqft_match = re.search(r'([\d,]+)\s*(sqft|sq\.?\s*ft)', page_text, re.I)
                 if sqft_match:
-                    sqft_value = int(sqft_match.group(1).replace(',', ''))
-                    if 300 <= sqft_value <= 20000:
-                        property_data['sqft'] = sqft_match.group(1)
-        
-        address_strategies = [
-            ('CSS', 'h1[data-testid="street-address"]'),
-            ('CSS', 'h1'),
-        ]
-        
-        for strategy_type, selector in address_strategies:
-            try:
-                element = self.driver.find_element(By.CSS_SELECTOR, selector)
-                text = element.text.strip()
-                if any(indicator in text.lower() for indicator in ['st', 'ave', 'rd', 'dr', 'ma']):
-                    property_data['address'] = text
-                    break
-            except:
-                continue
-        
-        page_text = self.driver.page_source
-        
-        type_match = re.search(r'(single.family|condo|townhouse|multi.family)', page_text, re.I)
-        if type_match:
-            property_data['property_type'] = type_match.group(1)
-        
-        year_patterns = [
-            r'Built in (\d{4})',
-            r'built[:\s]+(\d{4})',
-            r'year[:\s]+(\d{4})'
-        ]
-        for pattern in year_patterns:
-            year_match = re.search(pattern, page_text, re.I)
-            if year_match:
-                property_data['year_built'] = year_match.group(1)
-                break
-        
-        price_sqft_patterns = [
-            r'\$([\d,]+)/sqft',
-            r'\$([\d,]+)\s*price/sqft',
-            r'price/sqft[:\s]+\$([\d,]+)',
-            r'\$([\d,]+)\s*/\s*sqft'
-        ]
-        for pattern in price_sqft_patterns:
-            price_sqft_match = re.search(pattern, page_text, re.I)
-            if price_sqft_match:
-                price_value = price_sqft_match.group(1).replace(',', '')
-                property_data['price_per_sqft'] = f"${price_value}/sqft"
-                break
-        
-        lot_patterns = [
-            r'(\d+\.?\d*)\s*Acres',
-            r'lot[:\s]*([\d,.]+)\s*(sq\s*ft|acres)',
-            r'([\d,.]+)\s*(acres|sq\s*ft)\s*lot'
-        ]
-        
-        for pattern in lot_patterns:
-            lot_match = re.search(pattern, page_text, re.I)
-            if lot_match:
-                size = lot_match.group(1)
-                if 'acres' in lot_match.group(0).lower():
-                    property_data['sqft_lot'] = f"{size} Acres"
-                else:
-                    property_data['sqft_lot'] = f"{size} sqft"
-                break
-
-    def extract_property_features_detailed(self, property_data):
+                    property_data['sqft'] = sqft_match.group(1)
+            
+        except Exception as e:
+            print(f"Error extracting basic info: {e}")
+    
+    def extract_property_features(self, property_data):
+        """Extract property features and details"""
         try:
-            print("  - Scrolling to middle of page...")
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight/2);")
-            time.sleep(1)
-            
-            print("  - Looking for expandable buttons...")
-            try:
-                expandable_buttons = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'See more') or contains(text(), 'Show more') or contains(text(), 'Facts')]")
-                for i, button in enumerate(expandable_buttons[:3]):  # Limit to first 3 buttons
-                    try:
-                        print(f"    - Clicking button {i+1}")
-                        self.driver.execute_script("arguments[0].click();", button)
-                        time.sleep(0.5)
-                    except:
-                        pass
-            except Exception as e:
-                print(f"    - No expandable buttons found: {e}")
-            
-            print("  - Extracting features from page source...")
             page_text = self.driver.page_source
             
+            # Extract interior features
             interior_features = []
             feature_patterns = [
-                r'hardwood\s+floors?', r'granite\s+countertops?', r'stainless\s+steel', r'tile\s+floors?',
-                r'carpet', r'laminate', r'marble', r'walk-in\s+closet', r'bay\s+window', r'skylight',
-                r'fireplace', r'built-in\s+shelves?', r'crown\s+molding', r'vaulted\s+ceiling'
+                r'hardwood\s+floors?', r'granite\s+countertops?', r'stainless\s+steel',
+                r'fireplace', r'walk-in\s+closet', r'tile\s+floors?'
             ]
             
             for pattern in feature_patterns:
                 matches = re.findall(pattern, page_text, re.I)
-                for match in matches[:5]:
+                for match in matches[:3]:
                     if match.lower() not in [f.lower() for f in interior_features]:
                         interior_features.append(match)
             
             property_data['interior_features'] = interior_features
             
-            room_patterns = [
-                r'dining\s+room', r'family\s+room', r'living\s+room', r'bonus\s+room', r'office',
-                r'den', r'study', r'library', r'sunroom', r'basement', r'attic', r'laundry\s+room',
-                r'mud\s+room', r'pantry', r'walk-in\s+pantry'
-            ]
+            # Extract year built
+            year_match = re.search(r'Built in (\d{4})', page_text, re.I)
+            if year_match:
+                property_data['year_built'] = year_match.group(1)
             
-            other_rooms = []
-            for pattern in room_patterns:
-                matches = re.findall(pattern, page_text, re.I)
-                for match in matches[:3]:
-                    if match.lower() not in [r.lower() for r in other_rooms]:
-                        other_rooms.append(match)
-            
-            property_data['other_rooms'] = other_rooms
-            
-            appliance_patterns = [
-                r'dishwasher', r'refrigerator', r'microwave', r'oven', r'range', r'cooktop',
-                r'disposal', r'washer', r'dryer', r'freezer', r'wine\s+cooler', r'ice\s+maker'
-            ]
-            
-            appliances = []
-            for pattern in appliance_patterns:
-                matches = re.findall(pattern, page_text, re.I)
-                for match in matches[:3]:
-                    if match.lower() not in [a.lower() for a in appliances]:
-                        appliances.append(match)
-            
-            property_data['appliances'] = appliances
-            
-            utilities = {}
-            utility_patterns = {
-                'Electric': r'Electric:\s*([^<\n]+)',
-                'Sewer': r'Sewer:\s*([^<\n]+)', 
-                'Water': r'Water:\s*([^<\n]+)',
-                'Utilities': r'Utilities for property:\s*([^<\n]+)'
-            }
-            
-            for utility_type, pattern in utility_patterns.items():
-                match = re.search(pattern, page_text, re.I)
-                if match:
-                    utilities[utility_type] = match.group(1).strip()
-            
-            property_data['utilities'] = utilities
-            
-            parking = {}
-            parking_patterns = {
-                'total_spaces': r'Total spaces:\s*(\d+)',
-                'garage_spaces': r'Garage spaces:\s*(\d+)',
-                'parking_features': r'Parking features:\s*([^<\n]+)',
-                'uncovered_spaces': r'Has uncovered spaces:\s*([^<\n]+)'
-            }
-            
-            for parking_type, pattern in parking_patterns.items():
-                match = re.search(pattern, page_text, re.I)
-                if match:
-                    parking[parking_type] = match.group(1).strip()
-            
-            property_data['parking'] = parking
-            print("  - Features extraction completed")
+            # Extract price per sqft
+            price_sqft_match = re.search(r'\$([\d,]+)/sqft', page_text, re.I)
+            if price_sqft_match:
+                property_data['price_per_sqft'] = f"${price_sqft_match.group(1)}/sqft"
             
         except Exception as e:
-            print(f"  - Error in features extraction: {e}")
-            property_data['interior_features'] = []
-            property_data['other_rooms'] = []
-            property_data['appliances'] = []
-            property_data['utilities'] = 'N/A'
-            property_data['parking'] = 'N/A'
+            print(f"Error extracting features: {e}")
     
-    def extract_neighborhood_scores_detailed(self, property_data):
+    def extract_neighborhood_data(self, property_data):
+        """Extract neighborhood scores and school information"""
         try:
-            print("  - Looking for neighborhood scores...")
-            try:
-                getting_around_elements = self.driver.find_elements(By.XPATH, "//*[contains(text(), 'Getting around')]")
-                if getting_around_elements:
-                    self.driver.execute_script("arguments[0].scrollIntoView();", getting_around_elements[0])
-                    time.sleep(1)
-            except:
-                pass
-            
             page_text = self.driver.page_source
             
-            walk_score_patterns = [
-                r'Walk Score[®]?\s*(\d+)\s*/\s*100',
-                r'Walk Score[®]?\s*(\d+)\s*\/\s*100',
-                r'Walk Score[®]?[^0-9]*(\d+)',
-            ]
+            # Extract walk score
+            walk_score_match = re.search(r'Walk Score[®]?\s*(\d+)', page_text, re.I)
+            if walk_score_match:
+                property_data['walk_score'] = f"{walk_score_match.group(1)}/100"
             
-            for pattern in walk_score_patterns:
-                walk_match = re.search(pattern, page_text, re.I)
-                if walk_match:
-                    walk_score = walk_match.group(1)
-                    if 0 <= int(walk_score) <= 100:
-                        property_data['walk_score'] = f"{walk_score}/100"
-                        break
-            
-            bike_score_patterns = [
-                r'Bike Score[®]?\s*(\d+)\s*/\s*100',
-                r'Bike Score[®]?\s*(\d+)\s*\/\s*100',
-                r'Bike Score[®]?[^0-9]*(\d+)',
-            ]
-            
-            for pattern in bike_score_patterns:
-                bike_match = re.search(pattern, page_text, re.I)
-                if bike_match:
-                    bike_score = bike_match.group(1)
-                    if 0 <= int(bike_score) <= 100:
-                        property_data['bike_score'] = f"{bike_score}/100"
-                        break
-            
-            print("  - Neighborhood scores extraction completed")
+            # Extract bike score
+            bike_score_match = re.search(r'Bike Score[®]?\s*(\d+)', page_text, re.I)
+            if bike_score_match:
+                property_data['bike_score'] = f"{bike_score_match.group(1)}/100"
             
         except Exception as e:
-            print(f"  - Error in neighborhood scores extraction: {e}")
-            property_data['walk_score'] = 'N/A'
-            property_data['bike_score'] = 'N/A'
-    
-    def extract_schools_detailed(self, property_data):
-        try:
-            school_elements = self.driver.find_elements(By.XPATH, "//*[contains(text(), 'School') or contains(text(), 'school')]")
-            if school_elements:
-                self.driver.execute_script("arguments[0].scrollIntoView();", school_elements[0])
-                time.sleep(2)
-            
-            school_types = {
-                'elementary': ['elementary', 'primary', 'grade school'],
-                'middle': ['middle', 'junior high', 'intermediate'],
-                'high': ['high school', 'secondary', 'senior high']
-            }
-            
-            for school_type, keywords in school_types.items():
-                for keyword in keywords:
-                    try:
-                        school_elements = self.driver.find_elements(By.XPATH, f"//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{keyword}')]")
-                        
-                        for element in school_elements:
-                            try:
-                                container = element.find_element(By.XPATH, "./../..")
-                                container_text = container.text
-                                
-                                lines = container_text.split('\n')
-                                school_name = 'N/A'
-                                for line in lines:
-                                    if len(line) > 10 and not line.isdigit() and 'school' in line.lower():
-                                        school_name = line.strip()
-                                        break
-                                
-                                rating_match = re.search(r'(\d+)\s*(?:/\s*10|rating)', container_text, re.I)
-                                school_rating = f"{rating_match.group(1)}/10" if rating_match else 'N/A'
-                                
-                                distance_match = re.search(r'(\d+\.\d+|\d+)\s*mi', container_text)
-                                school_distance = distance_match.group(0) if distance_match else 'N/A'
-                                
-                                if school_name != 'N/A':
-                                    property_data[f'{school_type}_school'] = {
-                                        'name': school_name,
-                                        'score': school_rating,
-                                        'distance': school_distance
-                                    }
-                                    break
-                                    
-                            except:
-                                continue
-                        
-                        if property_data[f'{school_type}_school']['name'] != 'N/A':
-                            break
-                            
-                    except:
-                        continue
-            
-        except Exception as e:
-            pass
-    
-    def extract_environmental_risks(self, property_data):
-        try:
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(2)
-            
-            property_data['flood_risk'] = 'N/A'
-            property_data['fire_risk'] = 'N/A'
-            property_data['wind_risk'] = 'N/A'
-            property_data['air_risk'] = 'N/A'
-            property_data['heat_risk'] = 'N/A'
-            
-            try:
-                climate_section = self.driver.find_element(By.XPATH, "//*[contains(text(), 'Climate risks')]")
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", climate_section)
-                time.sleep(3)
-            except:
-                pass
-            
-            risk_mappings = {
-                'flood': 'flood_risk',
-                'fire': 'fire_risk', 
-                'wind': 'wind_risk',
-                'air': 'air_risk',
-                'heat': 'heat_risk'
-            }
-            
-            for risk_type, risk_key in risk_mappings.items():
-                try:
-                    elements = self.driver.find_elements(By.XPATH, f"//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{risk_type} factor')]")
-                    
-                    for element in elements:
-                        try:
-                            container = element.find_element(By.XPATH, "./../../..")
-                            container_text = container.text
-                            
-                            level_match = re.search(r'(Minimal|Minor|Moderate|Major|Severe)', container_text, re.I)
-                            score_match = re.search(r'(\d+)/10', container_text)
-                            
-                            if level_match and score_match:
-                                level = level_match.group(1).title()
-                                score = score_match.group(1)
-                                property_data[risk_key] = f"{level} ({score}/10)"
-                                break
-                        except:
-                            continue
-                            
-                    if property_data[risk_key] != 'N/A':
-                        continue
-                        
-                except:
-                    pass
-                    
-        except:
-            pass
-    
-    def extract_market_data_detailed(self, property_data):
-        try:
-            history_elements = self.driver.find_elements(By.XPATH, "//*[contains(text(), 'Price history') or contains(text(), 'Sold') or contains(text(), 'Listed')]")
-            
-            history = []
-            for element in history_elements:
-                try:
-                    container = element.find_element(By.XPATH, "./..")
-                    container_text = container.text
-                    
-                    history_matches = re.findall(r'(\d{1,2}/\d{1,2}/\d{4})\s+([A-Za-z\s]+)\s+(\$[\d,]+)', container_text)
-                    for match in history_matches:
-                        history.append({
-                            'date': match[0],
-                            'event': match[1].strip(),
-                            'price': match[2]
-                        })
-                    
-                    if len(history) >= 5:
-                        break
-                        
-                except:
-                    continue
-            
-            property_data['property_history'] = history
-            
-        except Exception as e:
-            pass
-    
-    def extract_monthly_payment(self, property_data):
-        try:
-            payment_elements = self.driver.find_elements(By.XPATH, "//*[contains(text(), 'Monthly') or contains(text(), 'monthly') or contains(text(), 'Payment')]")
-            
-            for element in payment_elements:
-                try:
-                    container = element.find_element(By.XPATH, "./..")
-                    container_text = container.text
-                    
-                    payment_match = re.search(r'\$[\d,]+(?:/mo|/month|\s+monthly)', container_text, re.I)
-                    if payment_match:
-                        property_data['estimated_monthly_payment'] = payment_match.group(0)
-                        break
-                        
-                except:
-                    continue
-            
-            try:
-                calc_elements = self.driver.find_elements(By.XPATH, "//*[contains(text(), 'mortgage') or contains(text(), 'calculator')]")
-                for element in calc_elements:
-                    parent = element.find_element(By.XPATH, "./..")
-                    payment_match = re.search(r'\$[\d,]+', parent.text)
-                    if payment_match and property_data['estimated_monthly_payment'] == 'N/A':
-                        property_data['estimated_monthly_payment'] = payment_match.group(0)
-                        break
-            except:
-                pass
-                
-        except Exception as e:
-            pass
-    
-    def extract_nearby_cities(self, property_data):
-        try:
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(2)
-            
-            property_data['nearby_cities'] = []
-            property_data['region'] = 'N/A'
-            
-            page_source = self.driver.page_source
-            
-            region_patterns = [
-                r'Region:\s*([^<\n•]+)',
-                r'Region[:\s]+([^<\n•]+)',
-                r'Location[^<]*Region[:\s]*([^<\n•]+)'
-            ]
-            
-            for pattern in region_patterns:
-                region_match = re.search(pattern, page_source, re.I)
-                if region_match:
-                    region_text = region_match.group(1).strip()
-                    if region_text and len(region_text) > 2:
-                        property_data['region'] = region_text
-                        break
-            
-            if property_data['region'] == 'N/A':
-                try:
-                    location_elements = self.driver.find_elements(By.XPATH, "//*[contains(text(), 'Location')]")
-                    for location_elem in location_elements:
-                        try:
-                            for xpath in [".//..", "./../..", "./../../../.."]:
-                                container = location_elem.find_element(By.XPATH, xpath)
-                                container_text = container.text
-                                
-                                region_match = re.search(r'Region:\s*([^•\n]+)', container_text, re.I)
-                                if region_match:
-                                    property_data['region'] = region_match.group(1).strip()
-                                    break
-                            
-                            if property_data['region'] != 'N/A':
-                                break
-                        except:
-                            continue
-                except:
-                    pass
-            
-            nearby_cities_elements = self.driver.find_elements(By.XPATH, "//*[contains(text(), 'Nearby cities')]")
-            
-            if nearby_cities_elements:
-                self.driver.execute_script("arguments[0].scrollIntoView();", nearby_cities_elements[0])
-                time.sleep(2)
-                
-                container = nearby_cities_elements[0].find_element(By.XPATH, "./../..")
-                city_links = container.find_elements(By.XPATH, ".//a[contains(text(), 'Real estate')]")
-                
-                cities = []
-                for link in city_links[:5]:
-                    try:
-                        city_text = link.text.strip()
-                        city_name = city_text.replace(' Real estate', '').strip()
-                        if city_name and city_name not in cities:
-                            cities.append(city_name)
-                    except:
-                        continue
-                
-                property_data['nearby_cities'] = cities
-            
-            if not property_data['nearby_cities']:
-                nearby_section = re.search(r'Nearby cities(.*?)(?=<div|</section|</footer)', page_source, re.I | re.DOTALL)
-                
-                if nearby_section:
-                    section_text = nearby_section.group(1)
-                    city_matches = re.findall(r'([A-Za-z\s]+?)\s+Real estate', section_text)
-                    
-                    cities = []
-                    for city in city_matches[:5]:
-                        clean_city = city.strip()
-                        if clean_city and len(clean_city) > 2:
-                            cities.append(clean_city)
-                    
-                    property_data['nearby_cities'] = cities
-                    
-        except:
-            pass
+            print(f"Error extracting neighborhood data: {e}")
     
     def save_all_properties(self, filename_prefix="massachusetts_properties"):
         """Save all scraped properties to JSON and CSV"""
@@ -1215,35 +624,52 @@ class MultiPropertyZillowScraper:
         
         return flattened
 
-# Add this to the end of your zillow_scraper.py file, replacing the existing if __name__ == "__main__": section
 if __name__ == "__main__":
+    import os
+    
     print("="*80)
-    print("MULTI-PROPERTY MASSACHUSETTS ZILLOW SCRAPER")
-    print("Scraping properties from Massachusetts listings...")
+    print("IMPROVED ZILLOW SCRAPER")
     print("="*80)
     
-    # Massachusetts real estate search URL - CHANGE THIS TO ANY SEARCH URL YOU WANT
-    search_url = "https://www.zillow.com/ma/"
+    # Configuration
+    max_properties = int(os.getenv('MAX_PROPERTIES', '10'))  # Start with fewer for testing
+    search_location = os.getenv('SEARCH_LOCATION', 'ma')
+    headless = os.getenv('HEADLESS', 'false').lower() == 'true'
     
-    # You can also use more specific searches like:
-    # search_url = "https://www.zillow.com/homes/for_sale/Boston-MA/"
-    # search_url = "https://www.zillow.com/homes/for_sale/Cambridge-MA/" 
+    print(f"Configuration:")
+    print(f"  • Max properties: {max_properties}")
+    print(f"  • Search location: {search_location}")
+    print(f"  • Headless mode: {headless}")
+    print("="*80)
+    
+    # Build search URL
+    if search_location == 'ma':
+        search_url = "https://www.zillow.com/ma/"
+    else:
+        search_url = f"https://www.zillow.com/homes/for_sale/{search_location}/"
+    
+    print(f"Search URL: {search_url}")
+    
     # Initialize scraper
-    scraper = MultiPropertyZillowScraper(headless=False)
+    scraper = MultiPropertyZillowScraper(headless=headless)
     
     try:
-        # Scrape multiple properties - CHANGE max_properties to however many you want
-        all_properties = scraper.scrape_multiple_properties(search_url, max_properties=20)
+        # Scrape properties
+        print(f"\nStarting to scrape {max_properties} properties...")
+        all_properties = scraper.scrape_multiple_properties(search_url, max_properties=max_properties)
         
         # Save all data
         if all_properties:
-            json_file, csv_file = scraper.save_all_properties()
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            json_file, csv_file = scraper.save_all_properties(
+                filename_prefix=f"zillow_{search_location}_{timestamp}"
+            )
             
-            # Print summary
             print(f"\n🎯 SCRAPING COMPLETE!")
             print(f"   ✓ Successfully scraped: {len(all_properties)} properties")
             print(f"   ✓ Data saved to: {json_file}")
             print(f"   ✓ CSV saved to: {csv_file}")
+            
         else:
             print("\n❌ No properties were scraped successfully")
     
@@ -1251,13 +677,13 @@ if __name__ == "__main__":
         print("\n⏹️ Scraping interrupted by user")
         if scraper.all_properties_data:
             print("Saving partial data...")
-            scraper.save_all_properties(filename_prefix="massachusetts_properties_partial")
+            scraper.save_all_properties(filename_prefix=f"zillow_{search_location}_partial")
     
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
         if scraper.all_properties_data:
             print("Saving partial data...")
-            scraper.save_all_properties(filename_prefix="massachusetts_properties_error")
+            scraper.save_all_properties(filename_prefix=f"zillow_{search_location}_error")
     
     finally:
         # Clean up
