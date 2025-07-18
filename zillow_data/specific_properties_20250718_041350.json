@@ -1,0 +1,908 @@
+[
+  {
+    "url": "https://www.zillow.com/homedetails/29-Sunset-Dr-Seekonk-MA-02771/56873494_zpid/",
+    "scraped_at": "2025-07-18T04:08:10.450001",
+    "price": "$750,000",
+    "beds": "3",
+    "baths": "2",
+    "sqft": "1,908",
+    "sqft_lot": "0.43 Acres",
+    "address": "29 Sunset Dr, Seekonk, MA 02771",
+    "estimated_monthly_payment": "$4,680/mo",
+    "property_type": "single family",
+    "price_per_sqft": "$393/sqft",
+    "year_built": "1968",
+    "region": "Seekonk",
+    "interior_features": [
+      "Hardwood floors",
+      "Skylight",
+      "fireplace",
+      "Crown molding"
+    ],
+    "other_rooms": [
+      "living room",
+      "office",
+      "den",
+      "Basement",
+      "attic"
+    ],
+    "appliances": [
+      "Dishwasher",
+      "Refrigerator",
+      "Microwave",
+      "Oven",
+      "range",
+      "washer",
+      "Dryer"
+    ],
+    "utilities": {
+      "Electric": "200+ Amp Service, Circuit Breakers, Generator",
+      "Sewer": "Septic Tank",
+      "Water": "Public",
+      "Utilities": "Water Connected"
+    },
+    "parking": {
+      "total_spaces": "6",
+      "garage_spaces": "2",
+      "parking_features": "Attached, Garage Door Opener, Driveway",
+      "uncovered_spaces": "Yes"
+    },
+    "walk_score": "41/100",
+    "bike_score": "11/100",
+    "elementary_school": {
+      "name": "Nearby schools",
+      "score": "1/10",
+      "distance": "5 mi"
+    },
+    "middle_school": {
+      "name": "Nearby schools",
+      "score": "1/10",
+      "distance": "5 mi"
+    },
+    "high_school": {
+      "name": "Seekonk High School",
+      "score": "6/10",
+      "distance": "3.4 mi"
+    },
+    "flood_risk": "Minimal (1/10)",
+    "fire_risk": "Minimal (1/10)",
+    "wind_risk": "Major (6/10)",
+    "air_risk": "Minor (2/10)",
+    "heat_risk": "Major (5/10)",
+    "nearby_cities": [
+      "Attleboro",
+      "Dartmouth",
+      "Easton",
+      "Fall River",
+      "Mansfield"
+    ],
+    "property_history": [
+      {
+        "date": "7/15/2025",
+        "event": "Listed for sale",
+        "price": "$750,000"
+      },
+      {
+        "date": "7/9/2015",
+        "event": "Sold",
+        "price": "$375,000"
+      },
+      {
+        "date": "5/21/2015",
+        "event": "Pending sale",
+        "price": "$390,000"
+      },
+      {
+        "date": "5/12/2015",
+        "event": "Listed for sale",
+        "price": "$390,000"
+      },
+      {
+        "date": "9/28/2005",
+        "event": "Sold",
+        "price": "$390,000"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zillow.com/homedetails/20-Thomas-Coles-Ln-Wellfleet-MA-02667/56792531_zpid/",
+    "scraped_at": "2025-07-18T04:08:49.263476",
+    "price": "$825,000",
+    "beds": "3",
+    "baths": "2",
+    "sqft": "1,902",
+    "sqft_lot": "0.69 Acres",
+    "address": "20 Thomas Coles Lane, Wellfleet, MA 02667",
+    "estimated_monthly_payment": "$4,887/mo",
+    "property_type": "single family",
+    "price_per_sqft": "$434/sqft",
+    "year_built": "2001",
+    "region": "Wellfleet",
+    "interior_features": [
+      "Carpet",
+      "fireplace"
+    ],
+    "other_rooms": [
+      "OFFICE",
+      "den",
+      "Basement",
+      "attic"
+    ],
+    "appliances": [
+      "range"
+    ],
+    "utilities": {
+      "Electric": "Photovoltaics Seller Owned",
+      "Sewer": "Septic Tank"
+    },
+    "parking": {},
+    "walk_score": "41/100",
+    "bike_score": "11/100",
+    "elementary_school": {
+      "name": "Wellfleet Elementary School",
+      "score": "N/A",
+      "distance": "1.5 mi"
+    },
+    "middle_school": {
+      "name": "Nearby schools",
+      "score": "1/10",
+      "distance": "5 mi"
+    },
+    "high_school": {
+      "name": "Nauset Regional High School",
+      "score": "5/10",
+      "distance": "7.6 mi"
+    },
+    "flood_risk": "Minimal (1/10)",
+    "fire_risk": "Moderate (3/10)",
+    "wind_risk": "Severe (8/10)",
+    "air_risk": "Moderate (3/10)",
+    "heat_risk": "Major (5/10)",
+    "nearby_cities": [
+      "Barnstable",
+      "Bourne",
+      "Brewster",
+      "Chatham",
+      "Dennis"
+    ],
+    "property_history": [
+      {
+        "date": "7/15/2025",
+        "event": "Listed for sale",
+        "price": "$825,000"
+      },
+      {
+        "date": "11/8/2000",
+        "event": "Sold",
+        "price": "$145,055"
+      },
+      {
+        "date": "1/31/2000",
+        "event": "Sold",
+        "price": "$65,000"
+      },
+      {
+        "date": "7/15/2025",
+        "event": "Listed for sale",
+        "price": "$825,000"
+      },
+      {
+        "date": "11/8/2000",
+        "event": "Sold",
+        "price": "$145,055"
+      },
+      {
+        "date": "1/31/2000",
+        "event": "Sold",
+        "price": "$65,000"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zillow.com/homedetails/27-Keans-Rd-Burlington-MA-01803/57055935_zpid/",
+    "scraped_at": "2025-07-18T04:09:27.883521",
+    "price": "$799,000",
+    "beds": "4",
+    "baths": "2",
+    "sqft": "1,968",
+    "sqft_lot": "0.46 Acres",
+    "address": "27 Keans Rd, Burlington, MA 01803",
+    "estimated_monthly_payment": "$4,978/mo",
+    "property_type": "single family",
+    "price_per_sqft": "$406/sqft",
+    "year_built": "1967",
+    "region": "Burlington",
+    "interior_features": [
+      "hardwood floors",
+      "fireplace",
+      "crown molding"
+    ],
+    "other_rooms": [
+      "Dining room",
+      "family room",
+      "living room",
+      "office",
+      "den",
+      "Basement",
+      "attic"
+    ],
+    "appliances": [
+      "range"
+    ],
+    "utilities": {
+      "Sewer": "Public Sewer",
+      "Water": "Public"
+    },
+    "parking": {
+      "total_spaces": "4",
+      "parking_features": "Paved Drive, Off Street",
+      "uncovered_spaces": "Yes"
+    },
+    "walk_score": "42/100",
+    "bike_score": "11/100",
+    "elementary_school": {
+      "name": "Memorial Elementary School",
+      "score": "6/10",
+      "distance": "0.3 mi"
+    },
+    "middle_school": {
+      "name": "Nearby schools",
+      "score": "1/10",
+      "distance": "5 mi"
+    },
+    "high_school": {
+      "name": "Burlington High School",
+      "score": "7/10",
+      "distance": "0.6 mi"
+    },
+    "flood_risk": "Minimal (1/10)",
+    "fire_risk": "Minimal (1/10)",
+    "wind_risk": "Major (6/10)",
+    "air_risk": "Moderate (3/10)",
+    "heat_risk": "Major (5/10)",
+    "nearby_cities": [
+      "Arlington",
+      "Cambridge",
+      "Everett",
+      "Framingham",
+      "Lowell"
+    ],
+    "property_history": [
+      {
+        "date": "7/15/2025",
+        "event": "Listed for sale",
+        "price": "$799,000"
+      },
+      {
+        "date": "7/27/2001",
+        "event": "Sold",
+        "price": "$408,000"
+      },
+      {
+        "date": "7/15/2025",
+        "event": "Listed for sale",
+        "price": "$799,000"
+      },
+      {
+        "date": "7/27/2001",
+        "event": "Sold",
+        "price": "$408,000"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zillow.com/homedetails/14-Evelyn-Way-Seekonk-MA-02771/119100960_zpid/",
+    "scraped_at": "2025-07-18T04:10:09.292720",
+    "price": "$769,900",
+    "beds": "3",
+    "baths": "3",
+    "sqft": "2,100",
+    "sqft_lot": "0.53 Acres",
+    "address": "14 Evelyn Way, Seekonk, MA 02771",
+    "estimated_monthly_payment": "$4,804/mo",
+    "property_type": "single family",
+    "price_per_sqft": "$367/sqft",
+    "year_built": "2012",
+    "region": "Seekonk",
+    "interior_features": [
+      "hardwood floors",
+      "granite countertops",
+      "stainless steel",
+      "Carpet",
+      "walk-in closet",
+      "fireplace"
+    ],
+    "other_rooms": [
+      "dining room",
+      "living room",
+      "office",
+      "den",
+      "basement",
+      "attic"
+    ],
+    "appliances": [
+      "Dishwasher",
+      "Refrigerator",
+      "Microwave",
+      "Oven",
+      "range",
+      "washer"
+    ],
+    "utilities": {
+      "Electric": "200+ Amp Service",
+      "Sewer": "Septic Tank",
+      "Water": "Municipal"
+    },
+    "parking": {
+      "total_spaces": "5",
+      "garage_spaces": "1",
+      "parking_features": "Garage Door Opener"
+    },
+    "walk_score": "41/100",
+    "bike_score": "N/A",
+    "elementary_school": {
+      "name": "Nearby schools",
+      "score": "1/10",
+      "distance": "5 mi"
+    },
+    "middle_school": {
+      "name": "Nearby schools",
+      "score": "1/10",
+      "distance": "5 mi"
+    },
+    "high_school": {
+      "name": "Seekonk High School",
+      "score": "6/10",
+      "distance": "0.4 mi"
+    },
+    "flood_risk": "Minimal (1/10)",
+    "fire_risk": "Minimal (1/10)",
+    "wind_risk": "Major (6/10)",
+    "air_risk": "Minor (2/10)",
+    "heat_risk": "Major (5/10)",
+    "nearby_cities": [
+      "Attleboro",
+      "Dartmouth",
+      "Easton",
+      "Fall River",
+      "Mansfield"
+    ],
+    "property_history": [
+      {
+        "date": "7/8/2025",
+        "event": "Price change",
+        "price": "$769,900"
+      },
+      {
+        "date": "5/21/2025",
+        "event": "Listed for sale",
+        "price": "$785,000"
+      },
+      {
+        "date": "2/27/2012",
+        "event": "Sold",
+        "price": "$115,000"
+      },
+      {
+        "date": "8/24/2011",
+        "event": "Sold",
+        "price": "$150,000"
+      },
+      {
+        "date": "7/8/2025",
+        "event": "Price change",
+        "price": "$769,900"
+      },
+      {
+        "date": "5/21/2025",
+        "event": "Listed for sale",
+        "price": "$785,000"
+      },
+      {
+        "date": "2/27/2012",
+        "event": "Sold",
+        "price": "$115,000"
+      },
+      {
+        "date": "8/24/2011",
+        "event": "Sold",
+        "price": "$150,000"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zillow.com/homedetails/31-John-Joseph-Rd-Harwich-MA-02645/186990206_zpid/",
+    "scraped_at": "2025-07-18T04:10:46.704392",
+    "price": "$735,000",
+    "beds": "3",
+    "baths": "3",
+    "sqft": "1,968",
+    "sqft_lot": "0.51 Acres",
+    "address": "31 John Joseph Road, Harwich, MA 02645",
+    "estimated_monthly_payment": "$4,404/mo",
+    "property_type": "single family",
+    "price_per_sqft": "$373/sqft",
+    "year_built": "1981",
+    "region": "Harwich",
+    "interior_features": [
+      "carpet",
+      "fireplace"
+    ],
+    "other_rooms": [
+      "family room",
+      "office",
+      "den",
+      "Basement",
+      "attic"
+    ],
+    "appliances": [
+      "range"
+    ],
+    "utilities": {
+      "Sewer": "Septic Tank"
+    },
+    "parking": {
+      "total_spaces": "8"
+    },
+    "walk_score": "41/100",
+    "bike_score": "11/100",
+    "elementary_school": {
+      "name": "Harwich Elementary School",
+      "score": "5/10",
+      "distance": "1.7 mi"
+    },
+    "middle_school": {
+      "name": "Nearby schools",
+      "score": "1/10",
+      "distance": "5 mi"
+    },
+    "high_school": {
+      "name": "Monomoy Regional High School",
+      "score": "5/10",
+      "distance": "0.7 mi"
+    },
+    "flood_risk": "Minimal (1/10)",
+    "fire_risk": "Minimal (1/10)",
+    "wind_risk": "Severe (8/10)",
+    "air_risk": "Minor (2/10)",
+    "heat_risk": "Major (5/10)",
+    "nearby_cities": [
+      "Barnstable",
+      "Bourne",
+      "Brewster",
+      "Chatham",
+      "Dennis"
+    ],
+    "property_history": [
+      {
+        "date": "7/14/2025",
+        "event": "Listed for sale",
+        "price": "$735,000"
+      },
+      {
+        "date": "11/16/1988",
+        "event": "Sold",
+        "price": "$187,500"
+      },
+      {
+        "date": "7/14/2025",
+        "event": "Listed for sale",
+        "price": "$735,000"
+      },
+      {
+        "date": "11/16/1988",
+        "event": "Sold",
+        "price": "$187,500"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zillow.com/homedetails/23-Hickory-Ridge-Rd-Rehoboth-MA-02769/56867985_zpid/",
+    "scraped_at": "2025-07-18T04:11:24.261680",
+    "price": "$750,000",
+    "beds": "4",
+    "baths": "4",
+    "sqft": "2,160",
+    "sqft_lot": "1.38 Acres",
+    "address": "23 Hickory Ridge Rd, Rehoboth, MA 02769",
+    "estimated_monthly_payment": "$4,680/mo",
+    "property_type": "single family",
+    "price_per_sqft": "$347/sqft",
+    "year_built": "1979",
+    "region": "Rehoboth",
+    "interior_features": [
+      "stainless steel",
+      "fireplace",
+      "Vaulted Ceiling"
+    ],
+    "other_rooms": [
+      "Dining room",
+      "Family room",
+      "Living room",
+      "office",
+      "den",
+      "basement",
+      "attic",
+      "Pantry"
+    ],
+    "appliances": [
+      "oven",
+      "range",
+      "Washer",
+      "Dryer"
+    ],
+    "utilities": {
+      "Electric": "200+ Amp Service",
+      "Sewer": "Private Sewer",
+      "Water": "Private",
+      "Utilities": "for Gas Oven, for Electric Oven, for Electric Dryer, Washer Hookup"
+    },
+    "parking": {
+      "total_spaces": "6",
+      "garage_spaces": "2",
+      "parking_features": "Attached, Paved Drive, Off Street, Paved",
+      "uncovered_spaces": "Yes"
+    },
+    "walk_score": "41/100",
+    "bike_score": "11/100",
+    "elementary_school": {
+      "name": "Nearby schools",
+      "score": "1/10",
+      "distance": "20 mi"
+    },
+    "middle_school": {
+      "name": "Nearby schools",
+      "score": "1/10",
+      "distance": "20 mi"
+    },
+    "high_school": {
+      "name": "Dighton-Rehoboth Regional High School",
+      "score": "5/10",
+      "distance": "3.9 mi"
+    },
+    "flood_risk": "Minimal (1/10)",
+    "fire_risk": "Minor (2/10)",
+    "wind_risk": "Major (6/10)",
+    "air_risk": "Minor (2/10)",
+    "heat_risk": "Major (5/10)",
+    "nearby_cities": [
+      "Attleboro",
+      "Dartmouth",
+      "Easton",
+      "Fall River",
+      "Mansfield"
+    ],
+    "property_history": [
+      {
+        "date": "7/7/2025",
+        "event": "Listed for sale",
+        "price": "$750,000"
+      },
+      {
+        "date": "9/9/2003",
+        "event": "Sold",
+        "price": "$388,000"
+      },
+      {
+        "date": "7/7/2025",
+        "event": "Listed for sale",
+        "price": "$750,000"
+      },
+      {
+        "date": "9/9/2003",
+        "event": "Sold",
+        "price": "$388,000"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zillow.com/homedetails/10-Maple-St-Wenham-MA-01984/56971836_zpid/",
+    "scraped_at": "2025-07-18T04:12:02.610866",
+    "price": "$750,000",
+    "beds": "4",
+    "baths": "2",
+    "sqft": "1,968",
+    "sqft_lot": "0.66 Acres",
+    "address": "10 Maple St, Wenham, MA 01984",
+    "estimated_monthly_payment": "$4,667/mo",
+    "property_type": "single family",
+    "price_per_sqft": "$381/sqft",
+    "year_built": "1950",
+    "region": "Wenham",
+    "interior_features": [
+      "Hardwood floors",
+      "Carpet",
+      "marble",
+      "fireplace"
+    ],
+    "other_rooms": [
+      "dining room",
+      "Family room",
+      "Living room",
+      "office",
+      "den",
+      "sunroom",
+      "Basement",
+      "attic"
+    ],
+    "appliances": [
+      "range",
+      "Washer",
+      "Dryer"
+    ],
+    "utilities": {
+      "Sewer": "Private Sewer",
+      "Water": "Public",
+      "Utilities": "for Electric Range, for Electric Dryer, Washer Hookup"
+    },
+    "parking": {
+      "total_spaces": "4",
+      "parking_features": "Off Street"
+    },
+    "walk_score": "42/100",
+    "bike_score": "11/100",
+    "elementary_school": {
+      "name": "Bessie Buker Elementary School",
+      "score": "7/10",
+      "distance": "1.7 mi"
+    },
+    "middle_school": {
+      "name": "Private Showings Available! Opportunity Knocks: Single level living & income! Solid 3 bed room ranch style home with attached 1 bedroom apartment. The main home is ready for your grand vision, or just paint & floors, offering a charming open, fireplaced living/dining room, eat-in kitchen with slider to large deck out to an expansive, private yard. The garage has been converted to a sizable living space with multiple uses, or revert back to a garage. On the other side of the living/dining area you will find 3 ample bedrooms and a full bath with original tiled shower and tub. There is an interior connection to the 1 bedroom apartment boasting hardwood floors, sunroom and its own deck, exterior entrance and driveway. With easy access to Danvers, Beverly, and routes 1, 95 & 128, West Wenham is a super convenient location & has wonderful trails, a brand new playground, a convenience store, Winfreys chocolates, and highly rated schools. Please text when emailing offers.",
+      "score": "1/10",
+      "distance": "5 mi"
+    },
+    "high_school": {
+      "name": "Hamilton-Wenham Regional High School",
+      "score": "9/10",
+      "distance": "4 mi"
+    },
+    "flood_risk": "Minimal (1/10)",
+    "fire_risk": "Moderate (3/10)",
+    "wind_risk": "Major (6/10)",
+    "air_risk": "Moderate (3/10)",
+    "heat_risk": "Major (5/10)",
+    "nearby_cities": [
+      "Andover",
+      "Beverly",
+      "Haverhill",
+      "Lawrence",
+      "Lynn"
+    ],
+    "property_history": [
+      {
+        "date": "7/11/2025",
+        "event": "Price change",
+        "price": "$750,000"
+      },
+      {
+        "date": "7/9/2025",
+        "event": "Listed for sale",
+        "price": "$699,000"
+      },
+      {
+        "date": "7/11/2025",
+        "event": "Price change",
+        "price": "$750,000"
+      },
+      {
+        "date": "7/9/2025",
+        "event": "Listed for sale",
+        "price": "$699,000"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zillow.com/homedetails/329-Lakeshore-Dr-Sandisfield-MA-01255/56814450_zpid/",
+    "scraped_at": "2025-07-18T04:12:41.445837",
+    "price": "$749,900",
+    "beds": "4",
+    "baths": "3",
+    "sqft": "2,658",
+    "sqft_lot": "1 Acres",
+    "address": "329 Lakeshore Dr, Sandisfield, MA 01255",
+    "estimated_monthly_payment": "$4,905/mo",
+    "property_type": "single family",
+    "price_per_sqft": "$282/sqft",
+    "year_built": "1979",
+    "region": "Sandisfield",
+    "interior_features": [
+      "Skylight",
+      "Fireplace",
+      "vaulted ceiling"
+    ],
+    "other_rooms": [
+      "Dining room",
+      "Family room",
+      "Bonus room",
+      "office",
+      "den",
+      "Basement",
+      "attic",
+      "Mud room"
+    ],
+    "appliances": [
+      "Dishwasher",
+      "Refrigerator",
+      "Microwave",
+      "range",
+      "washer",
+      "Dryer"
+    ],
+    "utilities": {
+      "Electric": "200 Amp",
+      "Sewer": "Private Sewer",
+      "Water": "OWL Lake",
+      "Utilities": "Fiber Optic Availabl"
+    },
+    "parking": {
+      "total_spaces": "4",
+      "parking_features": "Off Street"
+    },
+    "walk_score": "42/100",
+    "bike_score": "11/100",
+    "elementary_school": {
+      "name": "Farmington River Elementary School",
+      "score": "N/A",
+      "distance": "1.6 mi"
+    },
+    "middle_school": {
+      "name": "Nearby schools",
+      "score": "1/10",
+      "distance": "5 mi"
+    },
+    "high_school": {
+      "name": "Lee Middle/High School",
+      "score": "6/10",
+      "distance": "11.4 mi"
+    },
+    "flood_risk": "Minimal (1/10)",
+    "fire_risk": "Moderate (3/10)",
+    "wind_risk": "Moderate (4/10)",
+    "air_risk": "Minor (2/10)",
+    "heat_risk": "Minor (2/10)",
+    "nearby_cities": [
+      "Adams",
+      "Cheshire",
+      "Dalton",
+      "Great Barrington",
+      "Lee"
+    ],
+    "property_history": [
+      {
+        "date": "7/15/2025",
+        "event": "Listed for sale",
+        "price": "$749,900"
+      },
+      {
+        "date": "5/16/2008",
+        "event": "Sold",
+        "price": "$255,000"
+      },
+      {
+        "date": "2/9/2007",
+        "event": "Sold",
+        "price": "$455,000"
+      },
+      {
+        "date": "1/17/2003",
+        "event": "Sold",
+        "price": "$410,000"
+      },
+      {
+        "date": "11/19/2001",
+        "event": "Sold",
+        "price": "$365,000"
+      }
+    ]
+  },
+  {
+    "url": "https://www.zillow.com/homedetails/111-Autran-Ave-North-Andover-MA-01845/56097558_zpid/",
+    "scraped_at": "2025-07-18T04:13:17.324532",
+    "price": "$750,000",
+    "beds": "4",
+    "baths": "2",
+    "sqft": "1,890",
+    "sqft_lot": "N/A",
+    "address": "111 Autran Ave, North Andover, MA 01845",
+    "estimated_monthly_payment": "$4,667/mo",
+    "property_type": "single family",
+    "price_per_sqft": "$397/sqft",
+    "year_built": "1972",
+    "region": "North Andover",
+    "interior_features": [
+      "Hardwood floors",
+      "Stainless Steel",
+      "carpet",
+      "Skylight",
+      "fireplace",
+      "vaulted ceiling"
+    ],
+    "other_rooms": [
+      "Dining room",
+      "Family room",
+      "Living room",
+      "office",
+      "den",
+      "basement",
+      "attic",
+      "Pantry"
+    ],
+    "appliances": [
+      "Oven",
+      "range",
+      "Washer",
+      "Dryer"
+    ],
+    "utilities": {
+      "Sewer": "Public Sewer",
+      "Water": "Public",
+      "Utilities": "for Electric Range, for Electric Oven, for Electric Dryer, Washer Hookup, Icemaker Connection"
+    },
+    "parking": {
+      "total_spaces": "4",
+      "garage_spaces": "1",
+      "parking_features": "Attached, Off Street"
+    },
+    "walk_score": "42/100",
+    "bike_score": "11/100",
+    "elementary_school": {
+      "name": "Atkinson Elementary School",
+      "score": "3/10",
+      "distance": "0.3 mi"
+    },
+    "middle_school": {
+      "name": "Welcome to this beautifully updated 4 bedroom, 1.5 bath home located just a short walk from local schools & old center. The home features hardwood floors throughout most of the space, w/ the exception of the oversized primary bedroom. A peaceful retreat with vaulted ceilings, a decorative window, and brand-new carpet for added comfort. Upstairs, you'll find four well proportioned bedrooms, including the primary, along w/ a tastefully renovated full bath. Each bedroom offers ample space & natural light, perfect for family, guests, or a home office. The first floor includes a cozy LR w/ a wood-burning fireplace & a pellet stove that keeps the home toasty on cold nights. The spacious eat-in kitchen opens to a vaulted FR w/ sliders leading to an oversized deck & a private backyard. Ideal for gatherings & outdoor enjoyment. Additional highlights include a one-car garage, generous basement storage, & a fantastic location on a quiet dead-end Street.",
+      "score": "1/10",
+      "distance": "5 mi"
+    },
+    "high_school": {
+      "name": "North Andover High School",
+      "score": "6/10",
+      "distance": "0.9 mi"
+    },
+    "flood_risk": "Minimal (1/10)",
+    "fire_risk": "Moderate (3/10)",
+    "wind_risk": "Major (6/10)",
+    "air_risk": "Moderate (3/10)",
+    "heat_risk": "Major (5/10)",
+    "nearby_cities": [
+      "Andover",
+      "Beverly",
+      "Haverhill",
+      "Lawrence",
+      "Lynn"
+    ],
+    "property_history": [
+      {
+        "date": "7/8/2025",
+        "event": "Listed for sale",
+        "price": "$750,000"
+      },
+      {
+        "date": "7/30/2002",
+        "event": "Sold",
+        "price": "$365,300"
+      },
+      {
+        "date": "3/31/1995",
+        "event": "Sold",
+        "price": "$172,000"
+      },
+      {
+        "date": "7/8/2025",
+        "event": "Listed for sale",
+        "price": "$750,000"
+      },
+      {
+        "date": "7/30/2002",
+        "event": "Sold",
+        "price": "$365,300"
+      },
+      {
+        "date": "3/31/1995",
+        "event": "Sold",
+        "price": "$172,000"
+      }
+    ]
+  }
+]
