@@ -1216,66 +1216,34 @@ class MultiPropertyZillowScraper:
         return flattened
 
 # Add this to the end of your zillow_scraper.py file, replacing the existing if __name__ == "__main__": section
-
 if __name__ == "__main__":
-    import os
-    
     print("="*80)
     print("MULTI-PROPERTY MASSACHUSETTS ZILLOW SCRAPER")
+    print("Scraping properties from Massachusetts listings...")
     print("="*80)
     
-    # Get configuration from environment variables (for GitHub Actions) or use defaults
-    max_properties = int(os.getenv('MAX_PROPERTIES', '2'))
-    search_location = os.getenv('SEARCH_LOCATION', 'ma')
-    headless = os.getenv('HEADLESS', 'false').lower() == 'true'
+    # Massachusetts real estate search URL - CHANGE THIS TO ANY SEARCH URL YOU WANT
+    search_url = "https://www.zillow.com/ma/"
     
-    print(f"Configuration:")
-    print(f"  • Max properties: {max_properties}")
-    print(f"  • Search location: {search_location}")
-    print(f"  • Headless mode: {headless}")
-    print("="*80)
-    
-    # Build search URL based on location
-    if search_location == 'ma':
-        search_url = "https://www.zillow.com/ma/"
-    else:
-        search_url = f"https://www.zillow.com/homes/for_sale/{search_location}/"
-    
-    print(f"Search URL: {search_url}")
-    
-    # Initialize scraper with headless mode for GitHub Actions
-    scraper = MultiPropertyZillowScraper(headless=headless)
+    # You can also use more specific searches like:
+    # search_url = "https://www.zillow.com/homes/for_sale/Boston-MA/"
+    # search_url = "https://www.zillow.com/homes/for_sale/Cambridge-MA/" 
+    # Initialize scraper
+    scraper = MultiPropertyZillowScraper(headless=False)
     
     try:
-        # Scrape properties
-        print(f"\nStarting to scrape {max_properties} properties...")
-        all_properties = scraper.scrape_multiple_properties(search_url, max_properties=max_properties)
+        # Scrape multiple properties - CHANGE max_properties to however many you want
+        all_properties = scraper.scrape_multiple_properties(search_url, max_properties=20)
         
         # Save all data
         if all_properties:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            json_file, csv_file = scraper.save_all_properties(
-                filename_prefix=f"zillow_{search_location}_{timestamp}"
-            )
+            json_file, csv_file = scraper.save_all_properties()
             
             # Print summary
             print(f"\n🎯 SCRAPING COMPLETE!")
             print(f"   ✓ Successfully scraped: {len(all_properties)} properties")
             print(f"   ✓ Data saved to: {json_file}")
             print(f"   ✓ CSV saved to: {csv_file}")
-            
-            # Create a summary file for GitHub Actions
-            summary = {
-                "timestamp": timestamp,
-                "search_location": search_location,
-                "properties_scraped": len(all_properties),
-                "json_file": json_file,
-                "csv_file": csv_file
-            }
-            
-            with open(f"scraping_summary_{timestamp}.json", 'w') as f:
-                json.dump(summary, f, indent=2)
-                
         else:
             print("\n❌ No properties were scraped successfully")
     
@@ -1283,13 +1251,13 @@ if __name__ == "__main__":
         print("\n⏹️ Scraping interrupted by user")
         if scraper.all_properties_data:
             print("Saving partial data...")
-            scraper.save_all_properties(filename_prefix=f"zillow_{search_location}_partial")
+            scraper.save_all_properties(filename_prefix="massachusetts_properties_partial")
     
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
         if scraper.all_properties_data:
             print("Saving partial data...")
-            scraper.save_all_properties(filename_prefix=f"zillow_{search_location}_error")
+            scraper.save_all_properties(filename_prefix="massachusetts_properties_error")
     
     finally:
         # Clean up
