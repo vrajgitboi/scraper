@@ -20,7 +20,7 @@ on:
 jobs:
   scrape-zillow:
     runs-on: ubuntu-latest
-    timeout-minutes: 600  # 5 hour timeout for long runs
+    timeout-minutes: 300  # 5 hour timeout for long runs
     permissions:
       contents: write
       actions: read
@@ -58,7 +58,7 @@ jobs:
         HEADLESS: 'true'
     
     - name: Upload scraped data as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: zillow-data-${{ github.run_id }}
