@@ -19,32 +19,150 @@ class MultiPropertyZillowScraper:
         self.last_scraped_url = None  # Track last scraped URL to avoid duplicates
         self.setup_driver(headless)
         
+    # Add this method to your MultiPropertyZillowScraper class to replace setup_driver
+
     def setup_driver(self, headless):
         try:
             import undetected_chromedriver as uc
             
             options = uc.ChromeOptions()
+            
+            # Enhanced anti-detection options for GitHub Actions
             if headless:
                 options.add_argument("--headless=new")
             
+            # Essential options for GitHub Actions
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--disable-gpu")
             options.add_argument("--window-size=1920,1080")
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_argument("--disable-extensions")
+            options.add_argument("--disable-plugins")
+            options.add_argument("--disable-images")  # Speed up loading
+            options.add_argument("--disable-javascript-harmony-shipping")
+            options.add_argument("--disable-background-timer-throttling")
+            options.add_argument("--disable-renderer-backgrounding")
+            options.add_argument("--disable-backgrounding-occluded-windows")
+            options.add_argument("--disable-client-side-phishing-detection")
+            options.add_argument("--disable-sync")
+            options.add_argument("--disable-translate")
+            options.add_argument("--hide-scrollbars")
+            options.add_argument("--mute-audio")
+            options.add_argument("--no-first-run")
+            options.add_argument("--safebrowsing-disable-auto-update")
+            options.add_argument("--ignore-certificate-errors")
+            options.add_argument("--allow-running-insecure-content")
+            options.add_argument("--disable-web-security")
+            options.add_argument("--disable-features=VizDisplayCompositor")
             
+            # User agent to appear more legitimate
+            options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+            
+            # Additional stealth options
+            options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_experimental_option('useAutomationExtension', False)
+            options.add_experimental_option("detach", True)
+            
+            print("Setting up undetected Chrome driver...")
             self.driver = uc.Chrome(options=options, version_main=None)
             
+            # Execute script to remove webdriver traces
+            self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            
+            print("✓ Chrome driver setup completed")
+            
         except Exception as e:
+            print(f"Undetected Chrome failed: {e}")
+            print("Falling back to regular Chrome...")
+            
             from webdriver_manager.chrome import ChromeDriverManager
+            from selenium.webdriver.chrome.service import Service
             
             options = Options()
             if headless:
-                options.add_argument("--headless")
+                options.add_argument("--headless=new")
             
+            # Same options as above
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+            
+            options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_experimental_option('useAutomationExtension', False)
             
             service = Service(ChromeDriverManager().install())
             self.driver = webdriver.Chrome(service=service, options=options)
+            
+            # Remove webdriver traces
+            self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    
+    
+    # Also add this improved method to handle Zillow's page loading
+    
+    def navigate_to_search_page(self, search_url):
+        """Enhanced navigation with better error handling"""
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                print(f"🔄 Navigating to search page (attempt {attempt + 1})...")
+                
+                # Clear cookies and cache
+                self.driver.delete_all_cookies()
+                
+                # Navigate to Zillow homepage first
+                print("  - Loading Zillow homepage...")
+                self.driver.get("https://www.zillow.com")
+                time.sleep(3)
+                
+                # Then navigate to search page
+                print(f"  - Loading search page: {search_url}")
+                self.driver.get(search_url)
+                time.sleep(5)
+                
+                # Wait longer and try multiple selectors
+                search_selectors = [
+                    '//*[@id="grid-search-results"]/ul',
+                    '//*[@id="grid-search-results"]',
+                    '//ul[contains(@class, "photo-cards")]',
+                    '//div[contains(@class, "search-page-react-content")]',
+                    '//article[contains(@class, "property-card")]'
+                ]
+                
+                found_results = False
+                for selector in search_selectors:
+                    try:
+                        print(f"  - Trying selector: {selector}")
+                        WebDriverWait(self.driver, 15).until(
+                            EC.presence_of_element_located((By.XPATH, selector))
+                        )
+                        print(f"  ✓ Found search results with selector: {selector}")
+                        found_results = True
+                        break
+                    except:
+                        continue
+                
+                if found_results:
+                    print("✅ Successfully loaded search page")
+                    return True
+                else:
+                    print("❌ No search results found with any selector")
+                    # Save page source for debugging
+                    with open(f"debug_page_{attempt}.html", "w") as f:
+                        f.write(self.driver.page_source)
+                    print(f"  - Saved page source to debug_page_{attempt}.html")
+                    
+            except Exception as e:
+                print(f"❌ Failed to load search page (attempt {attempt + 1}): {e}")
+                
+            if attempt < max_attempts - 1:
+                print("  - Waiting before retry...")
+                time.sleep(5)
+        
+        return False
     
     def check_and_recover_driver(self):
         """Check if driver is still active and recover if needed"""
@@ -66,34 +184,7 @@ class MultiPropertyZillowScraper:
             self.setup_driver(headless=False)
             return True
         
-    def navigate_to_search_page(self, search_url):
-        """Navigate to search page with recovery"""
-        max_attempts = 3
-        for attempt in range(max_attempts):
-            try:
-                if not self.check_and_recover_driver():
-                    continue
-                    
-                print(f"🔄 Navigating to search page (attempt {attempt + 1})...")
-                self.driver.get(search_url)
-                time.sleep(3)
-                
-                # Verify we're on the search page
-                WebDriverWait(self.driver, 15).until(
-                    EC.presence_of_element_located((By.XPATH, '//*[@id="grid-search-results"]/ul'))
-                )
-                print("✅ Successfully loaded search page")
-                return True
-                
-            except Exception as e:
-                print(f"❌ Failed to load search page (attempt {attempt + 1}): {e}")
-                if attempt < max_attempts - 1:
-                    time.sleep(2)
-                    continue
-                else:
-                    return False
-        
-        return False
+
 
     def scrape_multiple_properties(self, search_url, max_properties=50):
         """Scrape multiple properties from search results"""
