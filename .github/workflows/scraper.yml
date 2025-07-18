@@ -53,8 +53,8 @@ jobs:
         Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
         python main.py
       env:
-        MAX_PROPERTIES: ${{ github.event.inputs.max_properties || '50' }}
-        SEARCH_LOCATION: ${{ github.event.inputs.search_location || 'ma' }}
+        MAX_PROPERTIES: ${{ github.event.inputs.max_properties || '10' }}
+        SEARCH_LOCATION: ${{ github.event.inputs.search_location || 'Boston-MA' }}
         HEADLESS: 'true'
     
     - name: Upload scraped data as artifact
