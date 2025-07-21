@@ -4,26 +4,14 @@ on:
   schedule:
     # Run every day at 3:00 AM UTC (11:00 PM EST previous day)
     - cron: '0 3 * * *'
-  workflow_dispatch: # Manual trigger
-    inputs:
-      max_properties:
-        description: 'Maximum properties to scrape'
-        required: false
-        default: '50'
-        type: string
-      search_location:
-        description: 'Location to search (e.g., Boston-MA, Cambridge-MA, or just ma for all Massachusetts)'
-        required: false
-        default: 'ma'
-        type: string
+  workflow_dispatch: # Manual trigger to run the hardcoded Queue 2
 
 jobs:
   scrape-zillow:
     runs-on: ubuntu-latest
-    timeout-minutes: 300  # 5 hour timeout for long runs
+    timeout-minutes: 360  # 6 hour timeout for long runs
     permissions:
-      contents: write
-      actions: read
+      contents: write # Needed to commit results back to the repo
     
     steps:
     - name: Checkout repository
@@ -34,56 +22,51 @@ jobs:
       with:
         python-version: '3.11'
     
-    - name: Install Chrome and dependencies
+    - name: Install Google Chrome
       run: |
         sudo apt-get update
-        sudo apt-get install -y google-chrome-stable xvfb
+        sudo apt-get install -y google-chrome-stable
         
-    - name: Install Python dependencies
+    - name: Install Python dependencies from requirements.txt
       run: |
         pip install --upgrade pip
-        pip install selenium webdriver-manager undetected-chromedriver pandas python-dotenv
+        pip install -r requirements.txt # <-- FIX: Use your requirements.txt file
         
-    - name: Create output directory
-      run: mkdir -p zillow_data
-        
-    - name: Run Zillow scraper
+    - name: Run Zillow scraper for Queue 2
       run: |
-        export DISPLAY=:99
-        Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        # Your Python script is hardcoded to run Queue 2.
+        # It will save output to the 'data' directory by default.
         python main.py
       env:
-        MAX_PROPERTIES: ${{ github.event.inputs.max_properties || '10' }}
-        SEARCH_LOCATION: ${{ github.event.inputs.search_location || 'Boston-MA' }}
+        # Pass HEADLESS=true to ensure the scraper runs without a GUI.
+        # The Python script uses this environment variable.
         HEADLESS: 'true'
+        # The output directory is set in main.py, which defaults to 'data'
+        OUTPUT_DIR: 'data'
     
     - name: Upload scraped data as artifact
       uses: actions/upload-artifact@v4
-      if: always()
+      if: always() # Run this even if the scraper step fails
       with:
-        name: zillow-data-${{ github.run_id }}
-        path: |
-          *.json
-          *.csv
+        name: zillow-scraped-data-${{ github.run_id }}
+        path: data/ # <-- FIX: Correctly path to the 'data' directory where results are saved
         retention-days: 30
     
-    - name: Commit and push results (optional)
+    - name: Commit and push results
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
-        # Move files to data directory
-        mkdir -p zillow_data
-        mv *.json zillow_data/ 2>/dev/null || true
-        mv *.csv zillow_data/ 2>/dev/null || true
+        # Add everything inside the 'data' directory
+        git add data/
         
-        # Only commit if there are changes
-        git add zillow_data/
+        # Commit only if there are new files or changes
         if ! git diff --staged --quiet; then
-          git commit -m "Daily Zillow scraping results - $(date)"
+          git commit -m "Daily Zillow scraping results for Queue 2 - $(date)"
           git push
         else
           echo "No new data to commit"
         fi
       env:
+        # The GITHUB_TOKEN is provided by GitHub Actions automatically
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
