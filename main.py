@@ -51,7 +51,9 @@ if __name__ == "__main__":
     os.makedirs(base_dir, exist_ok=True)
 
     try:
+        driver.save_screenshot("data/screenshot_start.png")
         scraper = MultiPropertyZillowScraper(headless=headless)
+        
     except Exception as e:
         print(f"❌ Failed to initialize scraper: {e}")
         exit(1)
