@@ -79,7 +79,7 @@ class MultiPropertyZillowScraper:
         current_page = 1
         consecutive_failures = 0
 
-        driver.save_screenshot("data/screenshot_start.png")
+        self.driver.save_screenshot("data/screenshot_start.png")
         
         while properties_scraped < max_properties:
             print(f"\n=== PROCESSING PAGE {current_page} ===")
@@ -89,7 +89,7 @@ class MultiPropertyZillowScraper:
                 WebDriverWait(self.driver, 15).until(
                     EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[2]/div/div/div[1]/div[1]/ul'))
                 )
-                driver.save_screenshot("data/screenshot_start.png")
+                self.driver.save_screenshot("data/screenshot_start.png")
                 print("--------------------Search results loaded----------------------")
             except:
                 print("❌ Search results failed to load. Stopping.")
@@ -97,7 +97,7 @@ class MultiPropertyZillowScraper:
             
             # Step 1: Scroll to ensure all list items are in the DOM
             print("Loading all properties on page...")
-            driver.save_screenshot("data/screenshot_start.png")
+            self.driver.save_screenshot("data/screenshot_start.png")
             self.scroll_to_load_all_properties()
             time.sleep(random.uniform(2,4))
 
